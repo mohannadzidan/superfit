@@ -15,6 +15,7 @@ import {
 import PersonIcon from '@mui/icons-material/Person';
 import TuneIcon from '@mui/icons-material/Tune';
 import { MyInfo } from './pages/MyInfo';
+import { AIModel } from './pages/AIModel';
 
 const drawerWidth = 240;
 
@@ -61,7 +62,7 @@ export const Options = () => {
                 <ListItemIcon>
                   <TuneIcon />
                 </ListItemIcon>
-                <ListItemText primary="AI Model (Coming Soon)" />
+                <ListItemText primary="AI Model" />
               </ListItemButton>
             </ListItem>
           </List>
@@ -70,11 +71,7 @@ export const Options = () => {
       <Box component="main" sx={{ flexGrow: 1, p: 3, height: '100vh', overflow: 'hidden' }}>
         <Toolbar />
         {activePage === 'info' && <MyInfo />}
-        {activePage === 'model' && (
-          <Typography paragraph>
-            AI Model configuration will be implemented in Phase 5.
-          </Typography>
-        )}
+        {activePage === 'model' && <AIModel />}
       </Box>
     </Box>
   );
