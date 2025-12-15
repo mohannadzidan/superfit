@@ -21,6 +21,9 @@ export interface CompletionRequest {
   
   /** Temperature for response randomness (0.0-1.0) */
   temperature?: number;
+
+  /** Response format (e.g. 'json' for native JSON mode) */
+  format?: 'json';
 }
 
 export interface CompletionResponse {

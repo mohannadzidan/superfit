@@ -1,5 +1,7 @@
 import { adapterRegistry } from '../adapters/registry';
 import { LinkedInAdapter } from '../adapters/linkedin';
+import { popupManager } from './components/PopupManager';
+import { AnalyzeJobFitResponse } from '../shared/messaging/types';
 
 console.info('SuperFit: Content Script Loaded');
 
@@ -59,7 +61,49 @@ class JobWatcher {
         
         if (jobInfo) {
           console.log('SuperFit: Extracted Job Info:', jobInfo);
-          // TODO: Send to background script or show UI
+          console.log('SuperFit: Extracted Job Info:', jobInfo);
+          
+          // Show loading popup
+          popupManager.showLoading();
+
+          // Send to background for analysis
+          try {
+            chrome.runtime.sendMessage(
+              { type: 'ANALYZE_JOB_FIT', payload: { jobInfo } },
+              (response: AnalyzeJobFitResponse) => {
+                // Ensure response and check success
+                if (chrome.runtime.lastError) {
+                   console.error('SuperFit: Runtime Error:', chrome.runtime.lastError);
+                   popupManager.showError('Extension context invalidated. Please reload.');
+                   return;
+                }
+
+                if (response && response.success && response.result) {
+                   popupManager.showResult(response.result);
+                } else {
+                   const err = response?.error || 'Analysis failed (no response)';
+                   console.error('SuperFit: Analysis Error:', err);
+                   // Map specific errors to user friendly messages if needed,
+                   // or the PopupManager/ScorePopup handles generic strings.
+                   let userMsg = err;
+                   let canRetry = true;
+
+                   if (err === 'NO_RESUME') {
+                       userMsg = 'Please configure your resume in Extension Settings first.';
+                       canRetry = false; // "Open Settings" handled by manager
+                   } else if (err === 'LLM_NOT_CONFIGURED') {
+                       userMsg = 'Please configure AI Model in Extension Settings.';
+                       canRetry = false;
+                   }
+
+                   popupManager.showError(userMsg, canRetry);
+                }
+              }
+            );
+          } catch (e) {
+             console.error('SuperFit: Message Send Error:', e);
+             popupManager.showError('Extension error. Try reloading the page.');
+          }
         } else {
           console.log('SuperFit: Failed to extract job info (or page not fully loaded yet)');
           // Use a retry mechanism? Or just wait for next mutation?

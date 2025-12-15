@@ -27,7 +27,7 @@ export default defineManifest({
   },
   content_scripts: [
     {
-      matches: ['http://*/*', 'https://*/*'],
+      matches: ['http://*/*', 'https://*/*', 'http://localhost:11434/*', 'https://localhost:11434/*'],
       js: ['src/content/index.ts'],
     },
   ],

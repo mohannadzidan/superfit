@@ -1,6 +1,7 @@
 export interface StoredLLMConfig {
   providerId: string;
   modelId: string;
+  jsonStrategy: 'native' | 'extract' | 'two-stage'; // New field
   providerConfigs: {
     [providerId: string]: Record<string, unknown>;
   };
@@ -31,6 +32,7 @@ export const llmStorage = {
       await this.saveConfig({
         providerId: 'ollama', // Default
         modelId: '',
+        jsonStrategy: 'extract', // Default strategy
         providerConfigs: {
           [providerId]: settings
         },
@@ -39,19 +41,21 @@ export const llmStorage = {
     }
   },
 
-  async setActiveModel(providerId: string, modelId: string): Promise<void> {
+  async setActiveModel(providerId: string, modelId: string, jsonStrategy: 'native' | 'extract' | 'two-stage' = 'extract'): Promise<void> {
     const current = await this.getConfig();
     const now = new Date().toISOString();
 
     if (current) {
       current.providerId = providerId;
       current.modelId = modelId;
+      current.jsonStrategy = jsonStrategy;
       current.updatedAt = now;
       await this.saveConfig(current);
     } else {
       await this.saveConfig({
         providerId,
         modelId,
+        jsonStrategy,
         providerConfigs: {},
         updatedAt: now
       });

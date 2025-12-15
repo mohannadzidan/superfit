@@ -1,33 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Paper, Button, Snackbar, Alert, Typography, Divider } from '@mui/material';
+import { Box, Paper, Button, Snackbar, Alert, Typography, Divider, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent, FormHelperText } from '@mui/material';
 import { ProviderSelector } from '../components/ProviderSelector';
 import { ProviderConfigForm } from '../components/ProviderConfigForm';
 import { ModelSelector } from '../components/ModelSelector';
 import { ProviderRegistry } from '../../llm/registry';
 import { OllamaProvider } from '../../llm/providers/ollama';
 import { llmStorage } from '../../shared/storage/llm';
-import { LLMModel, ProviderConfigSchema } from '../../llm/types';
+import { LLMModel } from '../../llm/types';
 import { TestConnectionResponse, GetModelsResponse } from '../../shared/messaging/types';
-
-// Registry is singleton in context, but for Options page we might want 
-// to re-instantiate or share state. Since this is a separate page entity from Background,
-// we re-register providers here for UI helper purposes (like getting schema).
-// The actual storage and connection tests go through BG or direct if simpler.
-// Design doc said BG messages, but LLM Provider is also client-side compatible for localhost?
-// "Phase 5: Background script message handlers" implies using messages.
-// However, 'ollama' is local, so options page CAN reach it directly usually.
-// But to respect valid architecture, let's try direct first for simplicity or messaging if blocked.
-// Chrome extensions allow localhost fetch from options page.
 
 const registry = new ProviderRegistry();
 registry.register(new OllamaProvider());
 
 export const AIModel = () => {
-  const [providers, setProviders] = useState(registry.getAllProviders());
+  const [providers] = useState(registry.getAllProviders());
   const [selectedProviderId, setSelectedProviderId] = useState<string>('ollama');
   const [configValues, setConfigValues] = useState<Record<string, unknown>>({});
   const [models, setModels] = useState<LLMModel[]>([]);
   const [selectedModelId, setSelectedModelId] = useState<string>('');
+  const [jsonStrategy, setJsonStrategy] = useState<'native' | 'extract' | 'two-stage'>('extract');
   
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'checking' | 'idle'>('idle');
   const [modelsLoading, setModelsLoading] = useState(false);
@@ -44,22 +35,18 @@ export const AIModel = () => {
     if (stored) {
       setSelectedProviderId(stored.providerId);
       setSelectedModelId(stored.modelId);
+      setJsonStrategy(stored.jsonStrategy || 'extract');
       if (stored.providerConfigs[stored.providerId]) {
          setConfigValues(stored.providerConfigs[stored.providerId]);
       }
       
-      // If we have config, try to auto-fetch models
       if (stored.providerId) {
-         // Don't auto-test connection to avoid flashing error on load, 
-         // but maybe try silent fetch models
          refreshModels(stored.providerId, stored.providerConfigs[stored.providerId]);
       }
     } else {
-        // Defaults
         const defaultProvider = providers[0];
         if (defaultProvider) {
             setSelectedProviderId(defaultProvider.providerId);
-            // Function to get default config from schema? 
             const schema = defaultProvider.getConfigSchema();
             const defaults: Record<string, unknown> = {};
             schema.fields.forEach(f => {
@@ -73,7 +60,6 @@ export const AIModel = () => {
   const refreshModels = async (providerId: string, config: Record<string, unknown>) => {
     setModelsLoading(true);
     try {
-        // Use messaging to background to ensure consistency
         const response = await chrome.runtime.sendMessage({
             type: 'GET_LLM_MODELS',
             payload: { providerId, config }
@@ -96,11 +82,6 @@ export const AIModel = () => {
 
   const handleProviderSelect = (id: string) => {
     setSelectedProviderId(id);
-    const provider = registry.getProvider(id);
-    if (provider) {
-       // Reset config to defaults if empty
-       // In a real app we might load saved config for this specific provider if existed
-    }
     setModels([]);
     setSelectedModelId('');
     setConnectionStatus('idle');
@@ -131,7 +112,7 @@ export const AIModel = () => {
   const handleSave = async () => {
     try {
         await llmStorage.updateProviderConfig(selectedProviderId, configValues);
-        await llmStorage.setActiveModel(selectedProviderId, selectedModelId);
+        await llmStorage.setActiveModel(selectedProviderId, selectedModelId, jsonStrategy);
         setSaveStatus('saved');
     } catch (e) {
         setSaveStatus('error');
@@ -170,6 +151,39 @@ export const AIModel = () => {
             isLoading={modelsLoading}
             disabled={connectionStatus !== 'connected'}
         />
+
+        <Box sx={{ mt: 3, mb: 2 }}>
+            <Typography variant="h6" gutterBottom>Output Strategy</Typography>
+            <FormControl fullWidth disabled={connectionStatus !== 'connected'}>
+                <InputLabel id="json-strategy-label">JSON Strategy</InputLabel>
+                <Select
+                    labelId="json-strategy-label"
+                    value={jsonStrategy}
+                    label="JSON Strategy"
+                    onChange={(e: SelectChangeEvent) => setJsonStrategy(e.target.value as any)}
+                >
+                    <MenuItem value="native">
+                        <Box>
+                            <Typography variant="body1">Native (JSON Mode)</Typography>
+                            <Typography variant="caption" color="text.secondary">Use provider's native JSON capability (e.g. Ollama format: "json")</Typography>
+                        </Box>
+                    </MenuItem>
+                    <MenuItem value="extract">
+                         <Box>
+                            <Typography variant="body1">Extraction (Robust)</Typography>
+                            <Typography variant="caption" color="text.secondary">Allow free text, then extract JSON block via regex</Typography>
+                        </Box>
+                    </MenuItem>
+                    <MenuItem value="two-stage">
+                         <Box>
+                            <Typography variant="body1">Two-Stage (Think & Transform)</Typography>
+                            <Typography variant="caption" color="text.secondary">Generate reasoning first, then transform to JSON (slower, higher quality)</Typography>
+                        </Box>
+                    </MenuItem>
+                </Select>
+                <FormHelperText>Choose how the model produces structured data</FormHelperText>
+            </FormControl>
+        </Box>
         
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
             <Button 

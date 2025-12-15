@@ -94,6 +94,7 @@ export class OllamaProvider implements LLMProvider {
         prompt: request.prompt,
         system: request.systemPrompt,
         stream: false,
+        format: request.format, // Pass format if specified
         options: {
           temperature: request.temperature
         }
