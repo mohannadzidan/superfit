@@ -2,6 +2,54 @@ import { IProviderRegistry, providerRegistry } from './registry';
 import { CompletionRequest, CompletionResponse, LLMProvider } from './types';
 import { llmStorage } from '../shared/storage/llm';
 import { OllamaProvider } from './providers/ollama';
+import { LRUCache } from 'lru-cache'
+import { hash } from "ohash";
+
+const lru = new LRUCache({
+  max: 500,
+
+  // for use when you need to clean up something when objects
+  // are evicted from the cache
+  // dispose: (value, key, reason) => {
+  //   freeFromMemoryOrWhatever(value)
+  // },
+
+  // for use when you need to know that an item is being inserted
+  // note that this does NOT allow you to prevent the insertion,
+  // it just allows you to know about it.
+  // onInsert: (value, key, reason) => {
+  //   logInsertionOrWhatever(key, value)
+  // },
+
+  // how long to live in ms
+  ttl: 1000 * 60 * 5,
+
+  // return stale items before removing from cache?
+  allowStale: false,
+
+  // updateAgeOnGet: false,
+  // updateAgeOnHas: false,
+
+  // async method to use for cache.fetch(), for
+  // stale-while-revalidate type of behavior
+  // fetchMethod: async (key, staleValue, { options, signal, context }) => {},
+})
+
+
+async function cache<T>(key: string, asyncFn: () => Promise<T>): Promise<T> {
+  const cachedValue = lru.get(key);
+  if (cachedValue !== undefined) {
+    return cachedValue as T;
+  }
+  try {
+    const result = asyncFn();
+    lru.set(key, result);
+    return result;
+  } catch (error) {
+    lru.delete(key); 
+    throw error;
+  }
+}
 
 // Register default providers
 providerRegistry.register(new OllamaProvider());
@@ -21,18 +69,18 @@ export class LLMService implements ILLMService {
     // If IDs provided, use them
     if (providerId && modelId) {
       this.setProvider(providerId, modelId);
-      return;
+      return; 
     }
 
     // Otherwise load from storage
     const stored = await llmStorage.getConfig();
     if (stored) {
-      this.setProvider(stored.providerId, stored.modelId);
+      this.setProvider(stored.providerId, stored.providerConfigs[stored.providerId].modelId);
       
       // Update config if specific settings exist
       const provider = this.registry.getProvider(stored.providerId);
       if (provider && stored.providerConfigs[stored.providerId]) {
-        await provider.configure(stored.providerConfigs[stored.providerId]);
+        await provider.configure(stored.providerConfigs[stored.providerId].config);
       }
     } else {
       // Default fallback
@@ -71,12 +119,17 @@ export class LLMService implements ILLMService {
         success: false,
         error: 'No model selected.'
       };
-    }
+    }   
 
-    return this.currentProvider.generateCompletion({
+    const options = {
       ...request,
       model: this.currentModelId
-    });
+    }
+    const cacheKey = `completion:${hash(options)}`;
+    return cache(cacheKey, () => this.currentProvider!.generateCompletion({
+      ...request,
+      model: this.currentModelId
+    }));
   }
 
   getCurrentSettings() {

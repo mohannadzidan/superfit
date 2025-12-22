@@ -22,8 +22,8 @@ export class PopupManager {
     this.container = document.createElement('div');
     this.container.id = 'superfit-popup-host';
     this.container.style.position = 'fixed';
-    this.container.style.right = '20px';
-    this.container.style.bottom = '20px';
+    this.container.style.left = '0';
+    this.container.style.top = '0';
     this.container.style.zIndex = '999999';
     this.container.style.fontFamily = 'initial'; // Reset inheritance
 

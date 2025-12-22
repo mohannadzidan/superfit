@@ -1,20 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Box, Paper, Button, Snackbar, Alert, Typography, Divider, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent, FormHelperText } from '@mui/material';
 import { ProviderSelector } from '../components/ProviderSelector';
 import { ProviderConfigForm } from '../components/ProviderConfigForm';
 import { ModelSelector } from '../components/ModelSelector';
-import { ProviderRegistry } from '../../llm/registry';
-import { OllamaProvider } from '../../llm/providers/ollama';
 import { llmStorage } from '../../shared/storage/llm';
-import { LLMModel } from '../../llm/types';
-import { TestConnectionResponse, GetModelsResponse } from '../../shared/messaging/types';
+import type { LLMModel,  } from '../../llm/types';
+import { TestConnectionResponse, GetModelsResponse, ListLLMProvidersResponse } from '../../shared/messaging/types';
 
-const registry = new ProviderRegistry();
-registry.register(new OllamaProvider());
 
 export const AIModel = () => {
-  const [providers] = useState(registry.getAllProviders());
-  const [selectedProviderId, setSelectedProviderId] = useState<string>('ollama');
+  const [providers, setProviders] = useState<ListLLMProvidersResponse['providers']>([]);
+  const [selectedProviderId, setSelectedProviderId] = useState<string>('');
   const [configValues, setConfigValues] = useState<Record<string, unknown>>({});
   const [models, setModels] = useState<LLMModel[]>([]);
   const [selectedModelId, setSelectedModelId] = useState<string>('');
@@ -24,17 +20,37 @@ export const AIModel = () => {
   const [modelsLoading, setModelsLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'error' | null>(null);
 
-  const activeProvider = registry.getProvider(selectedProviderId);
-
+  const activeProvider =providers?.find(p => p.providerId === selectedProviderId);
+console.log({
+  providers,
+  selectedProviderId,
+  activeProvider,
+  configValues,
+  models,
+  selectedModelId,
+  jsonStrategy,
+  connectionStatus,
+  modelsLoading,
+  saveStatus
+})
   useEffect(() => {
+    console.log('Selected provider:', selectedProviderId, providers);
+    chrome.runtime.sendMessage({
+      type: 'LIST_LLM_PROVIDERS'
+    }).then(response => {
+      if (response.success) {
+        setProviders(response.providers || []);
+      }
+    })
     loadConfig();
+
   }, []);
 
   const loadConfig = async () => {
     const stored = await llmStorage.getConfig();
     if (stored) {
       setSelectedProviderId(stored.providerId);
-      setSelectedModelId(stored.modelId);
+      setSelectedModelId(stored.providerConfigs[stored.providerId].modelId);
       setJsonStrategy(stored.jsonStrategy || 'extract');
       if (stored.providerConfigs[stored.providerId]) {
          setConfigValues(stored.providerConfigs[stored.providerId]);
@@ -43,17 +59,6 @@ export const AIModel = () => {
       if (stored.providerId) {
          refreshModels(stored.providerId, stored.providerConfigs[stored.providerId]);
       }
-    } else {
-        const defaultProvider = providers[0];
-        if (defaultProvider) {
-            setSelectedProviderId(defaultProvider.providerId);
-            const schema = defaultProvider.getConfigSchema();
-            const defaults: Record<string, unknown> = {};
-            schema.fields.forEach(f => {
-                if(f.defaultValue !== undefined) defaults[f.key] = f.defaultValue;
-            });
-            setConfigValues(defaults);
-        }
     }
   };
 
@@ -110,15 +115,16 @@ export const AIModel = () => {
   };
 
   const handleSave = async () => {
+        console.log('handleSave',{selectedProviderId, selectedModelId, jsonStrategy});
     try {
-        await llmStorage.updateProviderConfig(selectedProviderId, configValues);
         await llmStorage.setActiveModel(selectedProviderId, selectedModelId, jsonStrategy);
+        await llmStorage.updateProviderConfig(selectedProviderId, configValues);
         setSaveStatus('saved');
     } catch (e) {
         setSaveStatus('error');
+        console.error(e);
     }
   };
-
   return (
     <Box sx={{ maxWidth: 800 }}>
       <Typography variant="h5" gutterBottom>AI Model Configuration</Typography>
@@ -133,7 +139,7 @@ export const AIModel = () => {
 
         {activeProvider && (
             <ProviderConfigForm 
-                schema={activeProvider.getConfigSchema()}
+                schema={activeProvider.configSchema}
                 values={configValues}
                 onChange={setConfigValues}
                 onTestConnection={handleTestConnection}

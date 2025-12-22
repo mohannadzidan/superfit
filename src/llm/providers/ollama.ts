@@ -95,9 +95,9 @@ export class OllamaProvider implements LLMProvider {
         system: request.systemPrompt,
         stream: false,
         format: request.format, // Pass format if specified
-        options: {
-          temperature: request.temperature
-        }
+        // options: {
+        //   temperature: request.temperature
+        // }
       };
 
       const response = await fetch(`${this.config.serverUrl}/api/generate`, {

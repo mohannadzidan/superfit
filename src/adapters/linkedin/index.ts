@@ -1,4 +1,16 @@
 import { PlatformAdapter, JobPostingInfo } from '../types';
+import TurndownService from "turndown";
+
+const turndownService = new TurndownService();
+
+export function htmlToMarkdown(html: string) {
+  return turndownService
+    .turndown(html)
+    .replace(/\*\*\s*(.+?)\s*\*\*/g, "**$1**")
+    .replace(/[\t ]*(\n)[\t ]+$/gm, "\n")
+    .replace(/\n\s*\n+\s*/g, "\n\n")
+    .replace(/\* {2,}/g, "* ");
+}
 
 export class LinkedInAdapter implements PlatformAdapter {
   readonly name = 'linkedin';
@@ -10,8 +22,8 @@ export class LinkedInAdapter implements PlatformAdapter {
   isJobPostingPage(): boolean {
     // Check if URL pattern matches a job view or collections view
     const isJobUrl = window.location.pathname.includes('/jobs/view') ??
-                     window.location.pathname.includes('/jobs/collections');
-    
+                     window.location.pathname.includes('/jobs/collections') ??
+                     window.location.pathname.includes('/jobs/collections/recommended');
     // Also check if the job details container exists in the DOM
     const jobDetailsContainer = document.querySelector('.jobs-description-content') ??
                                 document.querySelector('.jobs-details__main-content');
@@ -38,7 +50,12 @@ export class LinkedInAdapter implements PlatformAdapter {
                                  document.querySelector('#job-details');
       
       // Get text content, maybe clean it up a bit
-      const jobDescription = descriptionElement?.textContent?.trim() ?? '';
+      const jobDescription = turndownService
+        .turndown(descriptionElement?.innerHTML ?? '')
+        .replace(/\*\*\s*(.+?)\s*\*\*/g, "**$1**")
+        .replace(/[\t ]*(\n)[\t ]+$/gm, "\n")
+        .replace(/\n\s*\n+\s*/g, "\n\n")
+        .replace(/\* {2,}/g, "* ");
       // Alternatively, use innerHTML if we want to preserve some formatting, 
       // but purely text is usually safer for LLMs.
 

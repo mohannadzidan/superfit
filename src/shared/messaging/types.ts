@@ -1,4 +1,4 @@
-import { LLMModel } from '../../llm/types';
+import { LLMModel, LLMProvider, ProviderConfigSchema } from '../../llm/types';
 import { JobPostingInfo } from '../../adapters/types';
 import { ScoredJob } from '../scoring/types';
 
@@ -23,6 +23,19 @@ export interface GetModelsMessage {
   };
 }
 
+export interface ListLLMProvidersMessage {
+  type: 'LIST_LLM_PROVIDERS';
+}
+
+export interface ListLLMProvidersResponse {
+  success: boolean;
+  providers?: {
+      readonly providerId: string;
+      readonly providerName: string;
+      readonly configSchema: ProviderConfigSchema;
+  }[];
+  error?: string;
+}
 export interface GetModelsResponse {
   success: boolean;
   models?: LLMModel[];
@@ -45,4 +58,5 @@ export interface AnalyzeJobFitResponse {
 export type LLMMessage = 
     | TestConnectionMessage 
     | GetModelsMessage
+    | ListLLMProvidersMessage
     | AnalyzeJobFitMessage;

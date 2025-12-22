@@ -43,7 +43,7 @@ class JobWatcher {
 
     this.checkTimeout = window.setTimeout(() => {
       this.performCheck();
-    }, 500);
+    }, 100);
   }
 
   private performCheck() {

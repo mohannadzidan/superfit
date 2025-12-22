@@ -1,9 +1,9 @@
 import React from 'react';
 import { FormControl, InputLabel, Select, MenuItem, SelectChangeEvent, Box, Typography } from '@mui/material';
-import { LLMProvider } from '../../llm/types';
+import { ListLLMProvidersResponse } from '../../shared/messaging/types';
 
 interface ProviderSelectorProps {
-  providers: LLMProvider[];
+  providers: ListLLMProvidersResponse['providers'];
   selectedProviderId: string;
   onSelect: (providerId: string) => void;
 }
@@ -31,7 +31,7 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({
           label="LLM Provider"
           onChange={handleChange}
         >
-          {providers.map((provider) => (
+          {providers?.map((provider) => (
             <MenuItem key={provider.providerId} value={provider.providerId}>
               {provider.providerName}
             </MenuItem>
