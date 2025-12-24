@@ -1,100 +1,128 @@
 import React, { useEffect } from 'react'
-import {
-  Box,
-  Paper,
-  Typography,
-  CircularProgress,
-  Alert,
-  Button,
-  IconButton,
-  ThemeProvider,
-  createTheme,
-  SxProps,
-  Theme,
-} from '@mui/material'
-import CloseIcon from '@mui/icons-material/Close'
+import { Box, Paper, Typography, CircularProgress, Button, SxProps, Theme } from '@mui/material'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import InfoIcon from '@mui/icons-material/Info'
 import WarningIcon from '@mui/icons-material/Warning'
 import CancelIcon from '@mui/icons-material/Cancel'
 import { FitScoreResult } from '../../shared/scoring/types'
 import { match } from 'ts-pattern'
-import { Egg, EmojiEvents, ThumbDownAlt, ThumbUpAlt } from '@mui/icons-material'
+import { EmojiEvents, ThumbDownAlt, ThumbUpAlt } from '@mui/icons-material'
+import { useLLMThread } from '../../shared/hooks/useLLMThread'
+import matchingLevelEvaluatorUserPrompt from '../../prompts/matching-level-evaluator.user.md?raw'
+import { Output, Prompt } from './MessageCard'
+import { ThreadHeader } from './ThreadHeader'
 
 // Embedded theme to ensure consistent look within Shadow DOM
-const theme = createTheme({
-  palette: {
-    mode: 'light',
-  },
-  typography: {
-    fontFamily: 'Roboto, Arial, sans-serif',
-  },
-})
+// const theme = createTheme({
+//   palette: {
+//     mode: 'light',
+//   },
+//   typography: {
+//     fontFamily: 'Roboto, Arial, sans-serif',
+//   },
+// })
 
 interface ScorePopupProps {
-  state: 'loading' | 'success' | 'error'
-  result?: FitScoreResult
   error?: string
   onClose: () => void
   onRetry?: () => void
-  onOpenOptions?: () => void
+  jobId?: string
+  initialJobInfo?: any
 }
 
-const ScorePopupContent: React.FC<ScorePopupProps> = ({
-  state,
-  result,
-  error,
+export function ScorePopup({
+  error: propError,
   onClose,
   onRetry,
-  onOpenOptions,
-}) => {
+  jobId,
+  initialJobInfo,
+}: ScorePopupProps) {
   const [isExpanded, setIsExpanded] = React.useState(false)
-  const style = match<
-    { state: typeof state; level: Exclude<typeof result, undefined>['level'] | undefined },
-    SxProps<Theme>
-  >({
-    level: result?.level,
-    state,
+
+  // Thread Hook
+  const {
+    inputTokens,
+    outputTokens,
+    messages,
+    streamingContent,
+    status: threadStatus,
+    sendMessage,
+  } = useLLMThread(jobId || '')
+
+  // Determine active state/data
+  // specific logic: if jobId is present, use thread data. fallback to props.
+  const isThreadActive = !!jobId
+
+  // If parsing fitResult fails or is pending, we might be 'loading' or 'success' from props?
+  // Let's rely on threadStatus.
+  // Start analysis if needed
+  useEffect(() => {
+    // if (jobId && initialJobInfo && messages.length === 0 && threadStatus === 'idle') {
+    if (messages.length === 0 && threadStatus === 'idle') {
+      sendMessage(initialJobInfo, [
+        {
+          role: 'user',
+          content: matchingLevelEvaluatorUserPrompt,
+        },
+      ])
+    } else if (messages.length == 2 && threadStatus === 'idle') {
+      sendMessage(
+        initialJobInfo,
+        [
+          {
+            role: 'user',
+            content: 'Use the `submit_fit_score` to submit the user score',
+          },
+        ],
+        [
+          {
+            type: 'function',
+            function: {
+              name: 'submit_fit_score',
+              description: 'Submit the fit score of the candidate',
+              parameters: {
+                type: 'object',
+                properties: {
+                  level: {
+                    type: 'string',
+                    description:
+                      'an enum describes the fit level of the candidate, one of SUPER_FIT | LIKELY_MATCHING | BARELY_MATCHING | NOT_MATCHING',
+                  },
+                },
+                required: ['level'],
+              },
+            },
+          },
+        ],
+      )
+    }
+    // startAnalysis(initialJobInfo)
+    // }
+  }, [jobId, messages.length, threadStatus])
+
+  const style = match<{ state: string; level: string | undefined }, SxProps<Theme>>({
+    level: 'SUPER_FIT', // TODO: change the static value
+    state: 'loading',
   })
     .with({ state: 'loading' }, () => ({ backgroundColor: '#ffffffff' }))
     .with({ level: 'SUPER_FIT' }, () => ({ backgroundColor: '#98ff94ff' }))
     .with({ level: 'LIKELY_MATCHING' }, () => ({ backgroundColor: '#fdcd85ff' }))
-    // .with({ level: 'BARELY_MATCHING' }, () => ({ backgroundColor: '#fdcd85ff' }))
-    // .with({ level: 'NOT_MATCHING' }, { state: 'error' }, () => ({ backgroundColor: '#ac1c31ff' }))
     .otherwise(() => ({ backgroundColor: '#ac1c31ff' }))
 
-  useEffect(() => {
-    setIsExpanded(false)
-  }, [result])
-
-  const headline = match(result?.level)
-    .with('SUPER_FIT', () => ({
-      icon: <EmojiEvents sx={{ fontSize: 16 }} />,
-      text: 'Super Fit',
-    }))
+  const headline = match('SUPER_FIT' as string) // TODO: change the static value
+    .with('SUPER_FIT', () => ({ icon: <EmojiEvents sx={{ fontSize: 16 }} />, text: 'Super Fit' }))
     .with('LIKELY_MATCHING', () => ({
       icon: <ThumbUpAlt sx={{ fontSize: 16 }} />,
       text: 'Likely Matching',
     }))
-    // .with('NEUTRAL_MATCHING', () => ({
-    //   icon: <Egg sx={{ fontSize: 16 }} />,
-    //   text: 'Neutral Matching',
-    // }))
-    // .with('BARELY_MATCHING', () => ({
-    //   icon: <Egg sx={{ fontSize: 16 }} />,
-    //   text: 'Barely Matching',
-    // }))
-    .otherwise(() => ({
-      icon: <ThumbDownAlt sx={{ fontSize: 16 }} />,
-      text: 'Not Matching',
-    }))
+    .otherwise(() => ({ icon: <ThumbDownAlt sx={{ fontSize: 16 }} />, text: 'Not Matching' }))
 
   return (
     <Paper
       elevation={4}
       sx={{
         width: isExpanded ? 320 : 120,
-        p: 1,
+        pt: 0,
         borderRadius: isExpanded ? 2 : 4,
         backgroundColor: '#fff',
         position: 'absolute',
@@ -102,232 +130,116 @@ const ScorePopupContent: React.FC<ScorePopupProps> = ({
         top: '100vh',
         transform: 'translate(-50%, calc(-8px - 100%))',
         transition: 'all 0.2s ease-in-out',
-        border: '1px solid #00000036',
+        border: '1px solid',
+        borderColor: 'divider',
+        overflow: 'hidden',
+
         ...style,
       }}
     >
-      {match({ state, isExpanded })
-        .with({ state: 'loading', isExpanded: false }, () => (
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              height: '100%',
-              gap: 2,
-            }}
-          >
-            <CircularProgress size={16} />
-            <Typography variant="body2" noWrap>
-              Analyzing job match...
-            </Typography>
-          </Box>
-        ))
-        .with({ state: 'success', isExpanded: false }, () => (
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'start',
-              alignItems: 'center',
-              height: '100%',
-              gap: 1,
-            }}
-            onClick={() => setIsExpanded(true)}
-          >
-            {headline.icon}
-            <Typography variant="body2" noWrap>
-              {headline.text}
-            </Typography>
-          </Box>
-        ))
-        .with({ state: 'success', isExpanded: true }, () => (
-          <>
-            <Typography
-              variant="body2"
-              noWrap
-              sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+      <ThreadHeader
+        title="Job Match Analysis"
+        inputTokens={inputTokens}
+        outputTokens={outputTokens}
+        onToggleMinimize={() => setIsExpanded((p) => !p)}
+        isMinimized={!isExpanded}
+      />
+      <Box sx={{ p: 1 }}>
+        {match({ state: threadStatus, isExpanded })
+          .with(
+            { state: 'loading', isExpanded: false },
+            { state: 'streaming', isExpanded: false },
+            () => (
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  height: '100%',
+                  gap: 2,
+                }}
+                onClick={() => setIsExpanded(true)} // Allow expanding to see stream
+              >
+                <CircularProgress size={16} />
+                <Typography variant="body2" noWrap>
+                  {threadStatus === 'streaming' ? 'Thinking...' : 'Analyzing job match...'}
+                </Typography>
+              </Box>
+            ),
+          )
+          .with({ state: 'idle', isExpanded: false }, () => (
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100%',
+                gap: 2,
+              }}
+              onClick={() => setIsExpanded(true)} // Allow expanding to see stream
             >
-              {headline.icon}
-              {headline.text}
-            </Typography>
-
-            {result!.missingSkills && result!.missingSkills.length > 0 && (
-              <Box sx={{ mt: 1 }}>
-                <Typography fontWeight="bold">You are missing the following skills</Typography>
-                <Typography component="ul" color="text.secondary">
-                  {result!.missingSkills.map((skill) => (
-                    <li key={skill}>{skill}</li>
-                  ))}
+              <Typography variant="body2" noWrap>
+                Job analysis ready
+              </Typography>
+            </Box>
+          ))
+          // Loading + Expanded = Streaming View
+          .with({ isExpanded: true }, () => (
+            <Box sx={{ maxHeight: 200, overflowY: 'auto' }}>
+              {messages.map(({ content, role, tool_calls, timestamp }, index) =>
+                match({ role, isCallingTool: !!tool_calls, call: tool_calls?.[0] })
+                  .with({ role: 'assistant', isCallingTool: false }, () => (
+                    <Output key={index} message={content} />
+                  ))
+                  .with({ role: 'assistant', isCallingTool: true }, () => (
+                    <Output key={index} message={JSON.stringify(tool_calls)} />
+                  ))
+                  .otherwise(() => (
+                    <Prompt
+                      key={index}
+                      message={content}
+                      time={
+                        index + 1 < messages.length
+                          ? messages[index + 1].timestamp - timestamp
+                          : undefined
+                      }
+                    />
+                  )),
+              )}
+              {threadStatus === 'streaming' && !streamingContent && (
+                <Typography
+                  // variant="caption"
+                  color="text.secondary"
+                  component="div"
+                  sx={{ whiteSpace: 'pre-wrap' }}
+                >
+                  Thinking...
                 </Typography>
-              </Box>
-            )}
-
-            {result!.matchingSkills && result!.matchingSkills.length > 0 && (
-              <Box sx={{ mt: 0.5 }}>
-                <Typography variant="caption" fontWeight="bold" color="success.main">
-                  Matching:
-                </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-                  {result!.matchingSkills.join(', ')}
-                </Typography>
-              </Box>
-            )}
-          </>
-        ))
-        .with({ state: 'success' }, () => (
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              height: '100%',
-              gap: 2,
-            }}
-            onClick={() => setIsExpanded(true)}
-          >
-            <CircularProgress size={16} />
-            <Typography variant="body2" noWrap>
-              {result?.level}
-            </Typography>
-          </Box>
-        ))
-        .otherwise(() => (
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              height: '100%',
-              gap: 2,
-            }}
-          >
-            <CircularProgress size={16} />
-            <Button size="small" onClick={onRetry}>
-              {/* <Refresh /> */}
-            </Button>
-            <Typography variant="body2" noWrap>
-              Something went wrong
-            </Typography>
-          </Box>
-        ))}
-      {/* 
-     
-      {state === 'loading' && (
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 2 }}>
-          <CircularProgress size={30} sx={{ mb: 2 }} />
-          <Typography variant="body2" color="text.secondary">Analyzing job match...</Typography>
-        </Box>
-      )}
-
-      {state === 'error' && (
-        <Box>
-          <Alert severity="error" sx={{ mb: 2 }}>
-            <Typography variant="caption" display="block">{error || 'Analysis failed'}</Typography>
-          </Alert>
-          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-             {onRetry && <Button size="small" onClick={onRetry}>Retry</Button>}
-             {onOpenOptions && <Button size="small" color="primary" onClick={onOpenOptions}>Settings</Button>}
-          </Box>
-        </Box>
-      )}
-
-      {state === 'success' && result && (
-        <Box>
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: 1, 
-            mb: 2, 
-            p: 1.5, 
-            borderRadius: 1, 
-            backgroundColor: getBgColor(result.level),
-            color: getColor(result.level)
-           }}>
-             {getIcon(result.level)}
-             <Box>
-                <Typography variant="subtitle1" fontWeight="bold" lineHeight={1.2}>
-                  {result.headline}
-                </Typography>
-             </Box>
-          </Box>
-
-          <Typography variant="body2" paragraph sx={{ maxHeight: 100, overflowY: 'auto' }}>
-            {result.explanation}
-          </Typography>
-
-          {result.missingSkills && result.missingSkills.length > 0 && (
-             <Box sx={{ mt: 1 }}>
-                <Typography variant="caption" fontWeight="bold" color="error">Missing:</Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-                   {result.missingSkills.join(', ')}
-                </Typography>
-             </Box>
-          )}
-
-           {result.matchingSkills && result.matchingSkills.length > 0 && (
-             <Box sx={{ mt: 0.5 }}>
-                <Typography variant="caption" fontWeight="bold" color="success.main">Matching:</Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-                   {result.matchingSkills.join(', ')}
-                </Typography>
-             </Box>
-          )}
-
-        </Box>
-      )}
- */}
+              )}
+              {streamingContent && <Output message={streamingContent} />}
+            </Box>
+          ))
+          .otherwise(() => (
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100%',
+                gap: 2,
+              }}
+            >
+              {/* If error, try to show error message if available */}
+              <CircularProgress size={16} />
+              <Button size="small" onClick={onRetry}>
+                {/* <Refresh /> */}
+              </Button>
+              <Typography variant="body2" noWrap>
+                {propError || 'Something went wrong'}
+              </Typography>
+            </Box>
+          ))}
+      </Box>
     </Paper>
   )
 }
-
-// Helper for styles
-function getBgColor(level: string) {
-  switch (level) {
-    case 'SUPER_FIT':
-      return '#e8f5e9'
-    case 'LIKELY_MATCHING':
-      return '#e3f2fd'
-    case 'BARELY_MATCHING':
-      return '#fff3e0'
-    case 'NOT_MATCHING':
-      return '#ffebee'
-    default:
-      return '#f5f5f5'
-  }
-}
-
-function getColor(level: string) {
-  switch (level) {
-    case 'SUPER_FIT':
-      return '#2e7d32'
-    case 'LIKELY_MATCHING':
-      return '#1565c0'
-    case 'BARELY_MATCHING':
-      return '#ef6c00'
-    case 'NOT_MATCHING':
-      return '#c62828'
-    default:
-      return '#757575'
-  }
-}
-
-function getIcon(level: string) {
-  switch (level) {
-    case 'SUPER_FIT':
-      return <CheckCircleIcon />
-    case 'LIKELY_MATCHING':
-      return <InfoIcon />
-    case 'BARELY_MATCHING':
-      return <WarningIcon />
-    case 'NOT_MATCHING':
-      return <CancelIcon />
-    default:
-      return <InfoIcon />
-  }
-}
-
-export const ScorePopup: React.FC<ScorePopupProps> = (props) => (
-  <ThemeProvider theme={theme}>
-    <ScorePopupContent {...props} />
-  </ThemeProvider>
-)

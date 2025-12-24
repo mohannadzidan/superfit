@@ -1,9 +1,11 @@
-import { IProviderRegistry, providerRegistry } from './registry';
-import { CompletionRequest, CompletionResponse, LLMProvider } from './types';
-import { llmStorage } from '../shared/storage/llm';
-import { OllamaProvider } from './providers/ollama';
+import { IProviderRegistry, providerRegistry } from './registry'
+import { CompletionRequest, CompletionResponse, LLMProvider, StreamChunk } from './types'
+import { llmStorage } from '../shared/storage/llm'
+import { OllamaProvider } from './providers/ollama'
 import { LRUCache } from 'lru-cache'
-import { hash } from "ohash";
+import { hash } from 'ohash'
+import Mustache from 'mustache'
+import { resumeStorage } from '../shared/storage/resume'
 
 const lru = new LRUCache({
   max: 500,
@@ -35,109 +37,121 @@ const lru = new LRUCache({
   // fetchMethod: async (key, staleValue, { options, signal, context }) => {},
 })
 
-
 async function cache<T>(key: string, asyncFn: () => Promise<T>): Promise<T> {
-  const cachedValue = lru.get(key);
+  const cachedValue = lru.get(key)
   if (cachedValue !== undefined) {
-    return cachedValue as T;
+    return cachedValue as T
   }
   try {
-    const result = asyncFn();
-    lru.set(key, result);
-    return result;
+    const result = asyncFn()
+    lru.set(key, result)
+    return result
   } catch (error) {
-    lru.delete(key); 
-    throw error;
+    lru.delete(key)
+    throw error
   }
 }
 
 // Register default providers
-providerRegistry.register(new OllamaProvider());
+providerRegistry.register(new OllamaProvider())
 
 export interface ILLMService {
-  initialize(providerId?: string, modelId?: string): Promise<void>;
-  generateCompletion(request: Omit<CompletionRequest, 'model'>): Promise<CompletionResponse>;
+  initialize(providerId?: string, modelId?: string): Promise<void>
+  streamCompletion(
+    request: Omit<CompletionRequest, 'model'>,
+    onChunk: (chunk: StreamChunk) => void,
+  ): Promise<void>
 }
 
 export class LLMService implements ILLMService {
-  private currentProvider: LLMProvider | null = null;
-  private currentModelId: string = '';
+  private currentProvider: LLMProvider | null = null
+  private currentModelId: string = ''
 
   constructor(private registry: IProviderRegistry = providerRegistry) {}
 
   async initialize(providerId?: string, modelId?: string): Promise<void> {
     // If IDs provided, use them
     if (providerId && modelId) {
-      this.setProvider(providerId, modelId);
-      return; 
+      this.setProvider(providerId, modelId)
+      return
     }
 
     // Otherwise load from storage
-    const stored = await llmStorage.getConfig();
+    const stored = await llmStorage.getConfig()
     if (stored) {
-      this.setProvider(stored.providerId, stored.providerConfigs[stored.providerId].modelId);
-      
+      this.setProvider(stored.providerId, stored.providerConfigs[stored.providerId].modelId)
+
       // Update config if specific settings exist
-      const provider = this.registry.getProvider(stored.providerId);
+      const provider = this.registry.getProvider(stored.providerId)
       if (provider && stored.providerConfigs[stored.providerId]) {
-        await provider.configure(stored.providerConfigs[stored.providerId].config);
+        await provider.configure(stored.providerConfigs[stored.providerId].config)
       }
     } else {
       // Default fallback
-      const providers = this.registry.getAllProviders();
+      const providers = this.registry.getAllProviders()
       if (providers.length > 0) {
-        this.currentProvider = providers[0];
+        this.currentProvider = providers[0]
         // Cannot strictly set modelId yet until we fetch them, but provider is ready
       }
     }
   }
 
   private setProvider(providerId: string, modelId: string) {
-    const provider = this.registry.getProvider(providerId);
+    const provider = this.registry.getProvider(providerId)
     if (!provider) {
-      console.warn(`LLMService: Provider ${providerId} not found.`);
-      return;
+      console.warn(`LLMService: Provider ${providerId} not found.`)
+      return
     }
-    this.currentProvider = provider;
-    this.currentModelId = modelId;
+    this.currentProvider = provider
+    this.currentModelId = modelId
   }
 
-  async generateCompletion(request: Omit<CompletionRequest, 'model'>): Promise<CompletionResponse> {
+  async loadVariables() {
+    // 1. Get Resume
+    const resume = await resumeStorage.getResume()
+
+    return { resume: resume?.markdownContent ?? '' }
+  }
+
+  async streamCompletion(
+    request: Omit<CompletionRequest, 'model'> & { variables?: Record<string, string> },
+    onChunk: (chunk: StreamChunk) => void,
+  ): Promise<void> {
     if (!this.currentProvider) {
-      return {
-        text: '',
-        model: '',
-        success: false,
-        error: 'No LLM provider configured.'
-      };
+      throw new Error('No LLM provider configured.')
     }
 
     if (!this.currentModelId) {
-       return {
-        text: '',
-        model: '',
-        success: false,
-        error: 'No model selected.'
-      };
-    }   
-
-    const options = {
-      ...request,
-      model: this.currentModelId
+      throw new Error('No model selected.')
     }
-    const cacheKey = `completion:${hash(options)}`;
-    return cache(cacheKey, () => this.currentProvider!.generateCompletion({
-      ...request,
-      model: this.currentModelId
-    }));
+    const builtinVariables = await this.loadVariables()
+    request.variables = {
+      ...builtinVariables,
+      ...request.variables,
+    }
+    console.log({ aaaaa: true, variables: request.variables })
+
+    request.messages = request.messages?.map((message) => ({
+      ...message,
+      content: Mustache.render(message.content, request.variables),
+    }))
+
+    delete request.variables
+    return this.currentProvider.streamCompletion(
+      {
+        ...request,
+        model: this.currentModelId,
+      },
+      onChunk,
+    )
   }
 
   getCurrentSettings() {
     return {
       providerId: this.currentProvider?.providerId,
-      modelId: this.currentModelId
-    };
+      modelId: this.currentModelId,
+    }
   }
 }
 
-export const llmService = new LLMService();
+export const llmService = new LLMService()

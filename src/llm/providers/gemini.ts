@@ -1,30 +1,36 @@
-import { GoogleGenAI } from '@google/genai';
-import { LLMProvider, LLMModel, CompletionRequest, CompletionResponse, ProviderConfigSchema } from '../types';
+import { GoogleGenAI } from '@google/genai'
+import {
+  LLMProvider,
+  LLMModel,
+  CompletionRequest,
+  CompletionResponse,
+  ProviderConfigSchema,
+  StreamChunk,
+} from '../types'
 
 interface OllamaConfig {
- apiKey?: string,
+  apiKey?: string
 }
 
-
 interface OllamaGenerateResponse {
-  model: string;
-  response: string;
-  done: boolean;
+  model: string
+  response: string
+  done: boolean
 }
 
 export class GeminiProvider implements LLMProvider {
-  readonly providerId = 'gemini';
-  readonly providerName = 'Gemini';
-  private  ai = new GoogleGenAI({ apiKey: '' });
+  readonly providerId = 'gemini'
+  readonly providerName = 'Gemini'
+  private ai = new GoogleGenAI({ apiKey: '' })
   private config: OllamaConfig = {
-    apiKey: undefined
-  };
+    apiKey: undefined,
+  }
 
   async configure(config: Record<string, unknown>): Promise<void> {
     if (typeof config.apiKey === 'string') {
       // Remove trailing slash if present
-      this.config.apiKey = config.apiKey.replace(/\/$/, '');
-      this.ai = new GoogleGenAI({ apiKey: this.config.apiKey });  
+      this.config.apiKey = config.apiKey.replace(/\/$/, '')
+      this.ai = new GoogleGenAI({ apiKey: this.config.apiKey })
     }
   }
 
@@ -37,78 +43,64 @@ export class GeminiProvider implements LLMProvider {
           type: 'text',
           required: true,
           defaultValue: '',
-          description: 'API Key for Google GenAI'
-        }
-      ]
-    };
+          description: 'API Key for Google GenAI',
+        },
+      ],
+    }
   }
 
   async isAvailable(): Promise<boolean> {
     if (!this.config.apiKey) {
-      return false;
+      return false
     }
-     try {
-      const response = await this.ai.models.list();
-      return true ;
+    try {
+      const response = await this.ai.models.list()
+      return true // TODO: check if model is available properly
     } catch (error) {
-      return false;
+      return false
     }
   }
 
   async getAvailableModels(): Promise<LLMModel[]> {
     try {
-      const response = await this.ai.models.list();
-      return response.page.map(model => ({
-        modelId: model.name ?? "Unknown",
-        displayName: model.name ?? "Unknown",
-        description: model.description ?? ""
-      }));
+      const response = await this.ai.models.list()
+      return response.page.map((model) => ({
+        modelId: model.name ?? 'Unknown',
+        displayName: model.name ?? 'Unknown',
+        description: model.description ?? '',
+      }))
     } catch (error) {
-      console.error('Failed to fetch gemini models:', error);
-      return [];
+      console.error('Failed to fetch gemini models:', error)
+      return []
     }
   }
 
-  async generateCompletion(request: CompletionRequest): Promise<CompletionResponse> {
+  async streamCompletion(
+    request: CompletionRequest,
+    onChunk: (chunk: StreamChunk) => void,
+  ): Promise<void> {
     try {
-      const body = {
+      const result = await this.ai.models.generateContentStream({
         model: request.model,
-        prompt: request.prompt,
-        system: request.systemPrompt,
-        stream: false,
-        format: request.format, // Pass format if specified
-        options: {
-          temperature: request.temperature
+        contents: request.messages!.map((message) => ({
+          role: message.role,
+          parts: [{ text: message.content }],
+        })),
+      })
+
+      for await (const chunk of result) {
+        const chunkText = chunk.text
+        if (chunkText) {
+          onChunk({
+            text: chunkText,
+            isDone: false,
+          })
         }
-      };
-
-      const response = await this.ai.models.generateContent({
-        model: request.model,
-        contents:[ {
-          role: 'model',
-          parts: [{
-            text: request.systemPrompt  
-          }]
-        }, {
-          role: 'user',
-          parts: [{
-            text: request.prompt  
-          }]
-        }]
-      });
-
-      return {
-        text: response.text ?? "",
-        model: response.modelVersion ?? "",
-        success: true
-      };
+      }
+      onChunk({ text: '', isDone: true }) // Signal done
     } catch (error) {
-      return {
-        text: '',
-        model: request.model,
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error during generation'
-      };
+      console.error('Gemini stream failed', error)
+      throw error
     }
   }
 }
