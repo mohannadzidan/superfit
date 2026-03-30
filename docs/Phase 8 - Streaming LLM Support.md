@@ -12,10 +12,10 @@ Phase 8 introduces real-time streaming of LLM output to the UI, improving the us
 - **Purpose:** Manages persistent conversation threads and handles Chrome Port connections.
 - **Key Features:**
   - Maintains `threads` map (ID -> State).
-  - Handles `startAnalysis` to initiate Job Fit workflows.
+  - Handles `SEND_PROMPT` to initiate workflows and interactive follow-ups.
   - Broadcasts `STREAM_UPDATE` events as chunks arrive.
-  - Broadcasts `FIT_RESULT` when analysis is complete and parsed.
-  - Uses `llmService.streamCompletion` to interface with providers.
+  - Broadcasts `STATE_UPDATE` when thread state changes.
+  - Uses `llmService.streamCompletion` to interface with providers, merging resume context automatically.
 
 ### 2. LLM Providers
 
@@ -27,25 +27,24 @@ Phase 8 introduces real-time streaming of LLM output to the UI, improving the us
 ### 3. Frontend Hooks & UI
 
 - **Hook:** `useLLMThread(threadId)` (`src/shared/hooks/useLLMThread.ts`)
-  - Abstraction over `chrome.runtime.connect`.
-  - Manages `messages`, `streamingContent`, `status`, `fitResult`.
-  - Exposes `startAnalysis(jobInfo)` to trigger workflows.
+  - Abstraction over `chrome.runtime.connect` for thread ports.
+  - Manages message history, `streamingContent`, `status`, and model token consumption metrics.
+  - Exposes `sendMessage(variables, messages, tools)` to interact with the active thread.
 - **Component:** `ScorePopup.tsx`
-  - Refactored to accept `jobId`.
-  - Uses `useLLMThread` to drive the UI.
-  - Displays "Thinking..." with streaming text during analysis.
-  - Displays structured results once `FIT_RESULT` is received.
+  - Instantiates initial analysis flow or tooling context based on thread state.
+  - Uses `useLLMThread` to drive UI rendering of past messages and current streams.
+  - Displays structured conversation blocks (Prompts, Outputs) via `MessageCard.tsx`.
 
 ## Data Flow
 
 1. **Detection:** Content Script detects Job Posting -> specific adapter extracts `JobPostingInfo`.
 2. **Initiation:** `JobWatcher` calls `popupManager.startAnalysis(jobInfo)`.
 3. **Popup Mount:** `ScorePopup` mounts with `jobId`.
-4. **Connection:** `useLLMThread` connects to `thread:{jobId}` port.
-5. **Start:** If thread is empty, `ScorePopup` calls `startAnalysis`.
-6. **Streaming:** Background script calls LLM, streams chunks to UI via Port. UI updates in real-time.
-7. **Completion:** Background script finishes stream, parses JSON (Chain-of-Thought style), sends `FIT_RESULT`.
-8. **Result:** UI switches to Result view.
+4. **Connection:** `useLLMThread` connects to `thread:{jobId}` port and syncs state.
+5. **Start:** If thread is empty, `ScorePopup` calls `sendMessage` with the evaluator prompt.
+6. **Streaming:** Background script merges system variables (like resume), calls LLM, and streams chunks to UI via Port. UI updates `streamingContent` in real-time.
+7. **Completion:** Background script finishes stream, adds full assistant message to state, sends `STREAM_DONE` and updates full thread state.
+8. **Result:** UI shows updated conversation transcript.
 
 ## Verification
 

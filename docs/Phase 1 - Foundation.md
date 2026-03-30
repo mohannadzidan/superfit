@@ -71,8 +71,9 @@ flowchart LR
     end
     
     CS <-->|Chrome Messages| BG
+    CS <-->|Chrome Ports| BG
     OP <-->|Chrome Storage| Storage
     BG <-->|Chrome Storage| Storage
-    BG <-->|HTTP| External[Ollama API]
+    BG <-->|HTTP/SDK| External[Ollama/Gemini APIs]
 ```
 

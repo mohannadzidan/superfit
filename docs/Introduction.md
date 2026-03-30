@@ -23,11 +23,10 @@ SuperFit is a Chrome extension that empowers job seekers to instantly assess how
 - Provider pattern for LLM extensibility
 
 ### Out of Scope (Deferred)
-- Additional job platforms (TokyoDev, Indeed, etc.)
+- Additional job platforms (TokyoDev, Indeed, etc. beyond the core abstraction)
 - Profile enhancement questions/answers system
 - Resume customization suggestions
 - Cover letter generation
-- Cloud-based LLM providers
 - Application tracking features
 - Detailed skill gap analysis
 
