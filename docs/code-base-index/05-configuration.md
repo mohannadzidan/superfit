@@ -3,12 +3,14 @@
 ## Environment variables and runtime controls
 
 ### Build/runtime mode
+
 - Variable: `NODE_ENV`.
 - Where used: **src/manifest.ts**.
 - What it controls:
   - Appends a development suffix to extension name when running in development mode.
 
 ### Provider credentials and endpoints (user-managed settings)
+
 These are not process environment variables in this codebase; they are runtime settings stored in extension local storage.
 
 - Ollama server URL:
@@ -19,6 +21,7 @@ These are not process environment variables in this codebase; they are runtime s
   - Persisted in **src/shared/storage/llm.ts**.
 
 ### Model strategy toggle
+
 - Setting: `jsonStrategy` (`native`, `extract`, `two-stage`).
 - Where defined/persisted: **src/shared/storage/llm.ts**.
 - Where selected: **src/options/pages/AIModel.tsx**.
@@ -26,6 +29,7 @@ These are not process environment variables in this codebase; they are runtime s
   - Chosen output strategy for structured model responses. Note: The codebase includes the Chain-of-Thought processing intent (like the "two-stage" think-then-transform approach), which can be selected to ensure reliable extraction.
 
 ## Configuration files and what they govern
+
 - **package.json**:
   - Project metadata, scripts (`dev`, `build`, `preview`, `zip`), dependencies.
 - **vite.config.ts**:
@@ -40,6 +44,7 @@ These are not process environment variables in this codebase; they are runtime s
   - Extension page bootstrap documents; only options currently maps to a present source entry file.
 
 ## Feature flags and toggles
+
 - Build flag behavior:
   - Development naming toggle in **src/manifest.ts** based on `NODE_ENV`.
 - User-level runtime toggles:
@@ -47,6 +52,7 @@ These are not process environment variables in this codebase; they are runtime s
 - There is no centralized feature-flag service file in the current codebase.
 
 ## Notes and observed constraints
+
 - Manifest permissions are intentionally narrow (`storage` only) in **src/manifest.ts**.
 - Content scripts are configured with broad URL matches in **src/manifest.ts**, while platform matching is narrowed by adapter logic in **src/adapters/**.
 - README operational guidance mentions Ollama CORS setup for local development/runtime compatibility.

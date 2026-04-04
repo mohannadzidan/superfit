@@ -40,6 +40,9 @@ export const llmStorage = {
    
       }
       current.providerId = providerId;
+      if (!current.providerConfigs[providerId]) {
+        current.providerConfigs[providerId] = { config: {}, modelId: '' };
+      }
       current.providerConfigs[providerId].config = settings;
       current.updatedAt = now;
       await this.saveConfig(current);
@@ -50,6 +53,9 @@ export const llmStorage = {
     const now = new Date().toISOString();
 
     if (current) {
+      if (!current.providerConfigs[providerId]) {
+        current.providerConfigs[providerId] = { config: {}, modelId: '' };
+      }
       current.providerConfigs[providerId].modelId = modelId;
       current.jsonStrategy = jsonStrategy;
       current.updatedAt = now;

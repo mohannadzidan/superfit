@@ -2,19 +2,19 @@
 
 ## Objective
 
-Establish the foundational development environment and architectural patterns for SuperFit.  This phase focuses on project setup, introducing Material-UI (MUI), and defining clear separation between extension components.
+Establish the foundational development environment and architectural patterns for SuperFit. This phase focuses on project setup, introducing Material-UI (MUI), and defining clear separation between extension components.
 
 ## Technology Stack
 
-| Category         | Technology                              |
-|------------------|-----------------------------------------|
-| Language         | TypeScript 5.0+                         |
-| UI Framework     | React 18+                               |
-| Component Library| Material-UI (MUI) v5+                   |
-| Build Tool       | Vite                                    |
-| Package Manager  | pnpm                                    |
-| Extension API    | Chrome Extension Manifest V3            |
-| Storage          | Chrome Storage API                      |
+| Category          | Technology                   |
+| ----------------- | ---------------------------- |
+| Language          | TypeScript 5.0+              |
+| UI Framework      | React 18+                    |
+| Component Library | Material-UI (MUI) v5+        |
+| Build Tool        | Vite                         |
+| Package Manager   | pnpm                         |
+| Extension API     | Chrome Extension Manifest V3 |
+| Storage           | Chrome Storage API           |
 
 ## Project Structure
 
@@ -59,21 +59,20 @@ flowchart LR
         CS[Content Script]
         InjectedUI[Injected Components]
     end
-    
+
     subgraph BackgroundScript["Background Context"]
         BG[Service Worker]
         LLMService[LLM Service]
     end
-    
+
     subgraph OptionsPage["Options Page Context"]
         OP[React App]
         Storage[Storage Service]
     end
-    
+
     CS <-->|Chrome Messages| BG
     CS <-->|Chrome Ports| BG
     OP <-->|Chrome Storage| Storage
     BG <-->|Chrome Storage| Storage
     BG <-->|HTTP/SDK| External[Ollama/Gemini APIs]
 ```
-

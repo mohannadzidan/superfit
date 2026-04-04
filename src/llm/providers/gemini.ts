@@ -1,36 +1,18 @@
-import { GoogleGenAI } from '@google/genai'
-import {
-  LLMProvider,
-  LLMModel,
-  CompletionRequest,
-  CompletionResponse,
-  ProviderConfigSchema,
-  StreamChunk,
-} from '../types'
+import { ChatGoogleGenerativeAI } from '@langchain/google-genai'
+import { LangChainProvider, LLMModel, ProviderConfigSchema } from './types'
 
-interface OllamaConfig {
-  apiKey?: string
+interface GeminiModelsResponse {
+  models: Array<{ name: string; displayName: string; description?: string }>
 }
 
-interface OllamaGenerateResponse {
-  model: string
-  response: string
-  done: boolean
-}
-
-export class GeminiProvider implements LLMProvider {
+export class GeminiProvider implements LangChainProvider {
   readonly providerId = 'gemini'
   readonly providerName = 'Gemini'
-  private ai = new GoogleGenAI({ apiKey: '' })
-  private config: OllamaConfig = {
-    apiKey: undefined,
-  }
+  private apiKey = ''
 
   async configure(config: Record<string, unknown>): Promise<void> {
     if (typeof config.apiKey === 'string') {
-      // Remove trailing slash if present
-      this.config.apiKey = config.apiKey.replace(/\/$/, '')
-      this.ai = new GoogleGenAI({ apiKey: this.config.apiKey })
+      this.apiKey = config.apiKey
     }
   }
 
@@ -40,67 +22,60 @@ export class GeminiProvider implements LLMProvider {
         {
           key: 'apiKey',
           label: 'API Key',
-          type: 'text',
+          type: 'password',
           required: true,
           defaultValue: '',
-          description: 'API Key for Google GenAI',
+          description: 'Google AI API Key',
         },
       ],
     }
   }
 
   async isAvailable(): Promise<boolean> {
-    if (!this.config.apiKey) {
-      return false
-    }
+    if (!this.apiKey) return false
     try {
-      const response = await this.ai.models.list()
-      return true // TODO: check if model is available properly
-    } catch (error) {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000)
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models?key=${this.apiKey}`,
+        { signal: controller.signal },
+      )
+      clearTimeout(timeoutId)
+      return response.ok
+    } catch {
       return false
     }
   }
 
   async getAvailableModels(): Promise<LLMModel[]> {
+    if (!this.apiKey) return []
     try {
-      const response = await this.ai.models.list()
-      return response.page.map((model) => ({
-        modelId: model.name ?? 'Unknown',
-        displayName: model.name ?? 'Unknown',
-        description: model.description ?? '',
-      }))
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models?key=${this.apiKey}`,
+      )
+      if (!response.ok) return []
+      const data = (await response.json()) as GeminiModelsResponse
+      return data.models
+        .filter((m) => m.name.includes('gemini'))
+        .map((m) => ({
+          modelId: m.name.replace('models/', ''),
+          displayName: m.displayName || m.name,
+          description: m.description,
+        }))
     } catch (error) {
-      console.error('Failed to fetch gemini models:', error)
+      console.error('Failed to fetch Gemini models:', error)
       return []
     }
   }
 
-  async streamCompletion(
-    request: CompletionRequest,
-    onChunk: (chunk: StreamChunk) => void,
-  ): Promise<void> {
-    try {
-      const result = await this.ai.models.generateContentStream({
-        model: request.model,
-        contents: request.messages!.map((message) => ({
-          role: message.role,
-          parts: [{ text: message.content }],
-        })),
-      })
-
-      for await (const chunk of result) {
-        const chunkText = chunk.text
-        if (chunkText) {
-          onChunk({
-            text: chunkText,
-            isDone: false,
-          })
-        }
-      }
-      onChunk({ text: '', isDone: true }) // Signal done
-    } catch (error) {
-      console.error('Gemini stream failed', error)
-      throw error
-    }
+  createModel(
+    modelId: string,
+    _options?: { fetch?: typeof globalThis.fetch },
+  ): ChatGoogleGenerativeAI {
+    return new ChatGoogleGenerativeAI({
+      model: modelId,
+      apiKey: this.apiKey,
+      temperature: 0.7,
+    })
   }
 }

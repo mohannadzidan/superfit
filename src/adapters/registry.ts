@@ -1,3 +1,5 @@
+import { LinkedInAdapter } from './linkedin';
+import { TokyoDevAdapter } from './tokyodev';
 import { PlatformAdapter } from './types';
 
 export class AdapterRegistry {
@@ -24,6 +26,13 @@ export class AdapterRegistry {
   }
 
   /**
+   * Get an adapter by its name
+   */
+  getAdapterByName(name: string): PlatformAdapter | null {
+    return this.adapters.find(adapter => adapter.name === name) || null;
+  }
+
+  /**
    * Get all registered adapters
    */
   getAllAdapters(): PlatformAdapter[] {
@@ -33,3 +42,6 @@ export class AdapterRegistry {
 
 // Singleton instance
 export const adapterRegistry = new AdapterRegistry();
+
+adapterRegistry.register(new LinkedInAdapter())
+adapterRegistry.register(new TokyoDevAdapter())

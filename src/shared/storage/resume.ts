@@ -1,6 +1,6 @@
-import { ResumeData } from '../types/resume';
+import { ResumeData } from '../types/resume'
 
-const RESUME_STORAGE_KEY = 'resume_data';
+const RESUME_STORAGE_KEY = 'resume_data'
 
 export const resumeStorage = {
   /**
@@ -8,8 +8,8 @@ export const resumeStorage = {
    * @returns ResumeData or null if not set
    */
   async getResume(): Promise<ResumeData | null> {
-    const result = await chrome.storage.local.get(RESUME_STORAGE_KEY);
-    return result[RESUME_STORAGE_KEY] || null;
+    const result = await chrome.storage.local.get(RESUME_STORAGE_KEY)
+    return result[RESUME_STORAGE_KEY] || null
   },
 
   /**
@@ -21,22 +21,22 @@ export const resumeStorage = {
       markdownContent: content,
       lastModified: new Date().toISOString(),
       version: 1,
-    };
-    await chrome.storage.local.set({ [RESUME_STORAGE_KEY]: data });
+    }
+    await chrome.storage.local.set({ [RESUME_STORAGE_KEY]: data })
   },
 
   /**
    * Clear stored resume
    */
   async clearResume(): Promise<void> {
-    await chrome.storage.local.remove(RESUME_STORAGE_KEY);
+    await chrome.storage.local.remove(RESUME_STORAGE_KEY)
   },
 
   /**
    * Check if resume exists
    */
   async hasResume(): Promise<boolean> {
-    const resume = await this.getResume();
-    return !!resume;
-  }
-};
+    const resume = await this.getResume()
+    return !!resume
+  },
+}

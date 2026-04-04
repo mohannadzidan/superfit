@@ -1,0 +1,139 @@
+import { PlatformAdapter, JobPostingInfo } from './types';
+import { hash} from "ohash";
+
+import TurndownService from "turndown";
+
+const turndownService = new TurndownService();
+
+export function htmlToMarkdown(html: string) {
+  return turndownService
+    .turndown(html)
+    .replace(/\*\*\s*(.+?)\s*\*\*/g, "**$1**")
+    .replace(/[\t ]*(\n)[\t ]+$/gm, "\n")
+    .replace(/\n\s*\n+\s*/g, "\n\n")
+    .replace(/\* {2,}/g, "* ");
+}
+
+const ICON_SVG = /* svg */`<svg xmlns="http://www.w3.org/2000/svg" width="148" height="30" viewBox="0 0 596 110" fill="#ffffff" class="fill-white">
+  <path d="M61.2916 62.5747C64.7076 59.9027 70.6489 58.084 72.0382 61.7467C73.5782 65.8134 68.2262 65.6347 65.1036 67.3134C61.5316 69.2334 60.8196 74.2987 57.2956 72.5507C54.4009 71.1134 56.9089 66.004 61.2916 62.5747ZM41.3009 72.5507C37.7769 74.2987 37.0662 69.2334 33.4929 67.3134C30.3716 65.6347 25.0182 65.8134 26.5596 61.7467C27.9476 58.084 33.8902 59.9027 37.3049 62.5747C41.6876 66.004 44.1969 71.1134 41.3009 72.5507ZM55.2902 93.028C54.9449 93.3507 54.4222 93.4307 54.0102 93.1987C52.6076 92.4107 51.2209 92.2534 49.3076 92.2534C47.3929 92.2534 46.0076 92.4107 44.6049 93.1987C44.1929 93.4307 43.6689 93.3507 43.3236 93.028C32.2196 82.644 23.3889 74.9667 9.97557 71.3067C9.2329 71.104 8.92357 70.232 9.37823 69.612C22.6036 51.6214 26.5009 35.1147 49.3076 35.1147C72.1129 35.1147 76.0116 51.6214 89.2356 69.612C89.6916 70.232 89.3809 71.104 88.6382 71.3067C75.2249 74.9667 66.3956 82.644 55.2902 93.028ZM15.7276 6.48937C23.3222 6.48937 33.0982 25.516 35.4516 30.3334C35.7356 30.9147 35.4382 31.5947 34.8302 31.8187C27.6929 34.4387 21.7782 40.6587 17.9956 46.5507C17.6249 47.1294 16.7436 46.972 16.5889 46.3027C14.7289 38.256 7.88224 6.48937 15.7276 6.48937ZM82.8862 6.48937C90.7249 6.48937 83.8982 38.196 82.0302 46.2787C81.8742 46.9574 80.9822 47.116 80.6049 46.5307C76.8209 40.644 70.9129 34.436 63.7849 31.8187C63.1756 31.5947 62.8782 30.9147 63.1622 30.3334C65.5156 25.516 75.2916 6.48937 82.8862 6.48937ZM86.5142 55.3414C86.3556 55.0987 86.3089 54.8147 86.3836 54.5347C87.7502 49.4374 100.408 0.574704 83.5689 0.574704C70.5529 0.574704 59.1009 24.4387 57.0529 28.9507C56.8556 29.3827 56.4049 29.6254 55.9329 29.5614C54.7689 29.4054 52.3969 29.1494 49.3076 29.1494C46.2182 29.1494 43.8449 29.4054 42.6809 29.5614C42.2089 29.6254 41.7582 29.3827 41.5622 28.9507C39.5142 24.4387 28.0622 0.574704 15.0449 0.574704C-1.79243 0.574704 10.8636 49.4374 12.2302 54.5347C12.3049 54.8147 12.2596 55.0987 12.1009 55.3414C11.1329 56.8214 7.31557 62.596 0.810237 71.66C0.058237 72.7094 0.56757 74.1867 1.81024 74.54C5.95557 75.7134 14.3249 78.424 21.2249 82.788C29.9236 88.2894 39.2636 97.3534 41.0862 99.1534C41.2942 99.3587 41.3996 99.628 41.4249 99.9187C41.6502 102.544 43.8356 106.401 49.3076 106.401C54.7782 106.401 56.9649 102.544 57.1902 99.9187C57.2156 99.628 57.3196 99.3587 57.5276 99.1534C59.3502 97.3534 68.6902 88.2894 77.3889 82.788C84.2689 78.4374 92.6089 75.7307 96.7662 74.5494C98.0262 74.192 98.5449 72.6934 97.7822 71.6307C91.2902 62.5827 87.4809 56.82 86.5142 55.3414Z"></path>
+</svg>`;
+
+export class TokyoDevAdapter implements PlatformAdapter {
+  readonly name = 'tokyodev';
+  readonly icon = ICON_SVG;
+
+  matches(url: string): boolean {
+    return url.includes('tokyodev.com');
+  }
+
+  isJobPostingPage(): boolean {
+    // Check if URL pattern matches a job view or collections view
+    const isJobUrl = window.location.pathname.match(/companies\/.+?\/jobs.+?/) !== null;
+    return isJobUrl;
+  }
+
+  extractJobInfo(): JobPostingInfo | null {
+    try {
+      // Selectors based on common LinkedIn structures (subject to change)
+      // Title
+      const titleElement = document.querySelector('#job-header h1.headline') ?? 
+                           document.querySelector('#job-header h1');
+      const jobTitle = titleElement?.textContent?.trim() ?? '';
+
+      // Company
+      const companyElement =document.querySelector('#job-header a[href*="/companies/"]')
+      const companyName = companyElement?.textContent?.trim() ?? '';
+
+      // Description
+      // .jobs-description__content is a common container for the description
+      const descriptionElement = document.querySelector('h2 + article');
+      
+      // Get text content, maybe clean it up a bit
+      const jobDescription = turndownService
+        .turndown(descriptionElement?.innerHTML ?? '')
+        .replace(/\*\*\s*(.+?)\s*\*\*/g, "**$1**")
+        .replace(/[\t ]*(\n)[\t ]+$/gm, "\n")
+        .replace(/\n\s*\n+\s*/g, "\n\n")
+        .replace(/\* {2,}/g, "* ");
+      // Alternatively, use innerHTML if we want to preserve some formatting, 
+      // but purely text is usually safer for LLMs.
+
+      // Location
+      const locationElement = document.querySelector('#job-header h1.headline + div > span');
+      const location = locationElement?.textContent?.trim() ?? '';
+
+      if (!jobTitle || !jobDescription) {
+        console.warn('SuperFit: Failed to extract essential job info (Title or Description missing)');
+        return null;
+      }
+
+      const id = this.extractJobId() || 'unknown';
+
+      return {
+        id,
+        jobUrl: window.location.href,
+        jobTitle,
+        jobDescription,
+        companyName,
+        location,
+        platform: this.name,
+      };
+
+    } catch (error) {
+      console.error('SuperFit: Error extracting job info', error);
+      return null;
+    }
+  }
+
+  getApplyButton(): HTMLElement | null {
+    return document.querySelector<HTMLElement>('[data-target="modal-apply"]')
+  }
+
+  getJobDescriptionContainer(): HTMLElement | null {
+    return (
+      document.querySelector<HTMLElement>('.jobs-description__content') ??
+      document.querySelector<HTMLElement>('#job-details')
+    );
+  }
+
+  private extractJobId(): string | null {
+    // Try to extract from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentJobId = urlParams.get('currentJobId');
+    if (currentJobId) return currentJobId;
+
+    // Try regex on path
+    const match = window.location.pathname.match(/view\/(\d+)/);
+    if (match && match[1]) return match[1];
+
+    return null;
+  }
+
+
+  private getBadgeId(badge:  { text: string; }): string {
+    return `badge_${hash(badge)}`;
+  }
+
+  private createBadgeElement(props: { text: string; }): HTMLElement {
+    const badge = document.createElement('div');
+    badge.id = this.getBadgeId(props);
+    badge.textContent = props.text;
+    badge.style.padding = '4px 8px';
+    badge.style.backgroundColor = '#0073b1';
+    badge.style.color = 'white';
+    badge.style.borderRadius = '4px';
+    badge.style.fontSize = '12px';
+    badge.style.fontWeight = 'bold';
+    badge.style.display = 'inline-block';
+    badge.style.marginTop = '8px';
+    return badge;
+  }
+
+  
+    
+  addBadge(postId: string, badge: { text: string; }): void {
+    const badgeId = this.getBadgeId(badge);
+    if(document.querySelector(`[data-job-id="${postId}"] #${badgeId}`)) return;
+    document.querySelector(`[data-job-id="${postId}"] > div`)?.appendChild(this.createBadgeElement(badge));
+  }
+}
