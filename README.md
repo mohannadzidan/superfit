@@ -126,25 +126,25 @@ _Note: In production environments, replace wildcard `_` with the distinct extens
 To extend SuperFit to support a new job board (e.g., Glassdoor), create a new class implementing the `PlatformAdapter` interface in `src/adapters/`:
 
 ```typescript
-import { PlatformAdapter, JobPostingInfo } from './types'
+import { PlatformAdapter, JobPostingInfo } from "./types";
 
 export class GlassdoorAdapter implements PlatformAdapter {
-  name = 'Glassdoor'
+  name = "Glassdoor";
 
   matches(url: string): boolean {
-    return url.includes('glassdoor.com/Job')
+    return url.includes("glassdoor.com/Job");
   }
 
   isJobPostingPage(): boolean {
     // Logic to verify page type
-    return !!document.querySelector('.job-description')
+    return !!document.querySelector(".job-description");
   }
 
   extractJobInfo(): JobPostingInfo | null {
     // DOM extraction logic
     return {
       // ... mapped data
-    }
+    };
   }
 }
 ```

@@ -1,10 +1,10 @@
-const HIGHLIGHT_CLASS = 'superfit-keyword-highlight'
-const STYLE_ID = 'superfit-highlight-styles'
+const HIGHLIGHT_CLASS = "superfit-keyword-highlight";
+const STYLE_ID = "superfit-highlight-styles";
 
 function injectStyles() {
-  if (document.getElementById(STYLE_ID)) return
-  const style = document.createElement('style')
-  style.id = STYLE_ID
+  if (document.getElementById(STYLE_ID)) return;
+  const style = document.createElement("style");
+  style.id = STYLE_ID;
   style.textContent = /* css */ `.${HIGHLIGHT_CLASS} {
     background: linear-gradient(
         90deg,
@@ -41,17 +41,17 @@ function injectStyles() {
     background-size: 400% 200%;
     box-shadow: 0 0 14px rgba(255, 80, 120, 0.6);
     filter: brightness(1.05);
-}`
-  document.head.appendChild(style)
+}`;
+  document.head.appendChild(style);
 }
 
 function removeHighlights(container: HTMLElement) {
   container.querySelectorAll(`.${HIGHLIGHT_CLASS}`).forEach((el) => {
-    const text = document.createTextNode(el.textContent ?? '')
-    el.parentNode?.replaceChild(text, el)
-  })
+    const text = document.createTextNode(el.textContent ?? "");
+    el.parentNode?.replaceChild(text, el);
+  });
   // Merge adjacent text nodes left behind
-  container.normalize()
+  container.normalize();
 }
 
 /**
@@ -59,77 +59,81 @@ function removeHighlights(container: HTMLElement) {
  * Returns the list of keywords that were actually found (deduplicated).
  */
 export function highlightKeywords(container: HTMLElement, keywords: string[]): string[] {
-  injectStyles()
-  removeHighlights(container)
+  injectStyles();
+  removeHighlights(container);
 
-  if (!keywords.length) return []
+  if (!keywords.length) return [];
 
-  const found = new Set<string>()
+  const found = new Set<string>();
 
-  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT)
-  const textNodes: Text[] = []
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+  const textNodes: Text[] = [];
 
-  let node = walker.nextNode()
+  let node = walker.nextNode();
   while (node) {
-    textNodes.push(node as Text)
-    node = walker.nextNode()
+    textNodes.push(node as Text);
+    node = walker.nextNode();
   }
 
   for (const textNode of textNodes) {
-    const text = textNode.textContent ?? ''
-    if (!text.trim()) continue
+    const text = textNode.textContent ?? "";
+    if (!text.trim()) continue;
 
-    const lowerText = text.toLowerCase()
+    const lowerText = text.toLowerCase();
 
     // Collect all non-overlapping matches sorted by position
-    const matches: { start: number; end: number; original: string }[] = []
+    const matches: { start: number; end: number; original: string }[] = [];
 
     for (const keyword of keywords) {
-      const lower = keyword.toLowerCase()
-      let idx = lowerText.indexOf(lower)
+      const lower = keyword.toLowerCase();
+      let idx = lowerText.indexOf(lower);
       while (idx !== -1) {
         // ensure whole word match
-        if ((idx > 0 && /\w/.test(lowerText[idx - 1])) || (idx + lower.length < lowerText.length && /\w/.test(lowerText[idx + lower.length]))) break;
+        if (
+          (idx > 0 && /\w/.test(lowerText[idx - 1])) ||
+          (idx + lower.length < lowerText.length && /\w/.test(lowerText[idx + lower.length]))
+        )
+          break;
 
-        matches.push({ start: idx, end: idx + keyword.length, original: keyword })
-        idx = lowerText.indexOf(lower, idx + keyword.length)
+        matches.push({ start: idx, end: idx + keyword.length, original: keyword });
+        idx = lowerText.indexOf(lower, idx + keyword.length);
       }
     }
 
-    if (!matches.length) continue
+    if (!matches.length) continue;
 
-    matches.sort((a, b) => a.start - b.start)
+    matches.sort((a, b) => a.start - b.start);
 
-    const fragment = document.createDocumentFragment()
-    let pos = 0
+    const fragment = document.createDocumentFragment();
+    let pos = 0;
 
     for (const match of matches) {
-      if (match.start < pos) continue // skip overlapping
+      if (match.start < pos) continue; // skip overlapping
 
       if (match.start > pos) {
-        fragment.appendChild(document.createTextNode(text.slice(pos, match.start)))
+        fragment.appendChild(document.createTextNode(text.slice(pos, match.start)));
       }
 
-      const span = document.createElement('span')
-      span.className = HIGHLIGHT_CLASS
-      span.textContent = text.slice(match.start, match.end)
-      fragment.appendChild(span)
+      const span = document.createElement("span");
+      span.className = HIGHLIGHT_CLASS;
+      span.textContent = text.slice(match.start, match.end);
+      fragment.appendChild(span);
 
-      found.add(match.original)
-      pos = match.end
+      found.add(match.original);
+      pos = match.end;
     }
 
     if (pos < text.length) {
-      fragment.appendChild(document.createTextNode(text.slice(pos)))
+      fragment.appendChild(document.createTextNode(text.slice(pos)));
     }
 
-    textNode.parentNode?.replaceChild(fragment, textNode)
+    textNode.parentNode?.replaceChild(fragment, textNode);
   }
 
-  return [...found]
+  return [...found];
 }
 
 /** Removes all keyword highlights from the container. */
 export function clearHighlights(container: HTMLElement) {
-  removeHighlights(container)
+  removeHighlights(container);
 }

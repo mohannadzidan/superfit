@@ -1,7 +1,18 @@
-import React from 'react';
-import { FormControl, InputLabel, Select, MenuItem, SelectChangeEvent, Box, Typography, Button, Stack, CircularProgress } from '@mui/material';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import { LLMModel } from '../../llm/types';
+import React from "react";
+import {
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  SelectChangeEvent,
+  Box,
+  Typography,
+  Button,
+  Stack,
+  CircularProgress,
+} from "@mui/material";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import { LLMModel } from "../../llm/types";
 
 interface ModelSelectorProps {
   models: LLMModel[];
@@ -18,14 +29,14 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   onSelect,
   onRefresh,
   isLoading,
-  disabled
+  disabled,
 }) => {
   return (
     <Box sx={{ mb: 3 }}>
       <Typography variant="h6" gutterBottom>
         Model Selection
       </Typography>
-      
+
       <Stack direction="row" spacing={2} alignItems="center">
         <FormControl fullWidth disabled={disabled || isLoading}>
           <InputLabel id="model-select-label">Model</InputLabel>
@@ -50,9 +61,9 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
             ))}
           </Select>
         </FormControl>
-        
-        <Button 
-          variant="outlined" 
+
+        <Button
+          variant="outlined"
           onClick={onRefresh}
           disabled={disabled || isLoading}
           sx={{ height: 56, minWidth: 56 }}
@@ -60,9 +71,9 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
           {isLoading ? <CircularProgress size={24} /> : <RefreshIcon />}
         </Button>
       </Stack>
-      
+
       {disabled && !isLoading && (
-        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
           Connect to a provider to see available models.
         </Typography>
       )}

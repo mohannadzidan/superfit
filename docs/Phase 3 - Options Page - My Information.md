@@ -73,19 +73,19 @@ flowchart TB
 ```typescript
 interface MarkdownEditorProps {
   /** Current markdown content */
-  value: string
+  value: string;
 
   /** Callback when content changes */
-  onChange: (value: string) => void
+  onChange: (value: string) => void;
 
   /** Maximum character limit */
-  maxLength?: number
+  maxLength?: number;
 
   /** Placeholder text */
-  placeholder?: string
+  placeholder?: string;
 
   /** Read-only mode */
-  disabled?: boolean
+  disabled?: boolean;
 }
 ```
 
@@ -94,10 +94,10 @@ interface MarkdownEditorProps {
 ```typescript
 interface MarkdownPreviewProps {
   /** Markdown content to render */
-  content: string
+  content: string;
 
   /** Custom CSS class */
-  className?: string
+  className?: string;
 }
 ```
 
@@ -120,13 +120,13 @@ interface MarkdownPreviewProps {
 
 export interface ResumeData {
   /** Markdown content of the resume */
-  markdownContent: string
+  markdownContent: string;
 
   /** ISO timestamp of last modification */
-  lastModified: string
+  lastModified: string;
 
   /** Data version for future migrations */
-  version: number
+  version: number;
 }
 ```
 
@@ -146,23 +146,23 @@ export interface IResumeStorage {
    * Get stored resume data
    * @returns ResumeData or null if not set
    */
-  getResume(): Promise<ResumeData | null>
+  getResume(): Promise<ResumeData | null>;
 
   /**
    * Save resume data
    * @param content - Markdown content to save
    */
-  saveResume(content: string): Promise<void>
+  saveResume(content: string): Promise<void>;
 
   /**
    * Clear stored resume
    */
-  clearResume(): Promise<void>
+  clearResume(): Promise<void>;
 
   /**
    * Check if resume exists
    */
-  hasResume(): Promise<boolean>
+  hasResume(): Promise<boolean>;
 }
 ```
 

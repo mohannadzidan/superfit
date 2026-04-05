@@ -48,17 +48,17 @@ The background already held the LangChain thread service. The proxy makes it pos
 Previously, `handleUserMessage` called `model.invoke()` and broadcast a single `STATE_UPDATE` after the full response was received. It now calls `model.stream()` and broadcasts a `STATE_UPDATE` after every token chunk:
 
 ```typescript
-const assistantMsg: ThreadMessage = { role: 'assistant', content: '', timestamp: Date.now() }
-thread.messages.push(assistantMsg)
+const assistantMsg: ThreadMessage = { role: "assistant", content: "", timestamp: Date.now() };
+thread.messages.push(assistantMsg);
 
-const stream = await model.stream(langchainMessages)
+const stream = await model.stream(langchainMessages);
 for await (const chunk of stream) {
-  assistantMsg.content += typeof chunk.content === 'string' ? chunk.content : ''
-  this.broadcast(threadId, { type: 'STATE_UPDATE', thread })
+  assistantMsg.content += typeof chunk.content === "string" ? chunk.content : "";
+  this.broadcast(threadId, { type: "STATE_UPDATE", thread });
 }
 
-thread.status = 'idle'
-this.broadcast(threadId, { type: 'STATE_UPDATE', thread })
+thread.status = "idle";
+this.broadcast(threadId, { type: "STATE_UPDATE", thread });
 ```
 
 The UI receives a growing assistant message on every tick with no hook or component changes required — `useLLMThread` already re-renders on `STATE_UPDATE`.
@@ -76,28 +76,28 @@ Two new handlers were added alongside the existing message listener.
 ```typescript
 // Content script sends:
 chrome.runtime.sendMessage(
-  { type: 'PROXY_FETCH', payload: { url, method, headers, body } },
+  { type: "PROXY_FETCH", payload: { url, method, headers, body } },
   callback,
-)
+);
 
 // Background fetches and responds:
-const res = await fetch(url, { method, headers, body })
-sendResponse({ status, statusText, headers, body: await res.text() })
+const res = await fetch(url, { method, headers, body });
+sendResponse({ status, statusText, headers, body: await res.text() });
 ```
 
 #### Streaming (`proxy-stream` port)
 
 ```typescript
 // Content script opens a port:
-const port = chrome.runtime.connect({ name: 'proxy-stream' })
-port.postMessage({ url, method, headers, body })
+const port = chrome.runtime.connect({ name: "proxy-stream" });
+port.postMessage({ url, method, headers, body });
 
 // Background streams chunks back:
-port.postMessage({ type: 'response-headers', status, statusText, headers })
+port.postMessage({ type: "response-headers", status, statusText, headers });
 // ... repeated:
-port.postMessage({ type: 'chunk', data: '...' })
+port.postMessage({ type: "chunk", data: "..." });
 // when done:
-port.postMessage({ type: 'done' })
+port.postMessage({ type: "done" });
 ```
 
 ---
@@ -111,18 +111,18 @@ Two drop-in `fetch` replacements for use in content scripts.
 Routes all HTTP requests through `PROXY_FETCH` messages. Use this for providers that do not stream (or when streaming is not needed).
 
 ```typescript
-import { createProxiedFetch } from '../shared/proxy-fetch'
+import { createProxiedFetch } from "../shared/proxy-fetch";
 
-const proxiedFetch = createProxiedFetch()
+const proxiedFetch = createProxiedFetch();
 
 const llm = new ChatOpenAI({
   configuration: {
-    baseURL: 'http://localhost:11434/v1',
+    baseURL: "http://localhost:11434/v1",
     fetch: proxiedFetch,
   },
-  apiKey: 'ollama',
-  model: 'llama3',
-})
+  apiKey: "ollama",
+  model: "llama3",
+});
 ```
 
 #### `createStreamingProxiedFetch()`
@@ -130,18 +130,18 @@ const llm = new ChatOpenAI({
 Opens a `proxy-stream` port and reconstructs a `ReadableStream` from the chunks. Use this for providers that stream responses (Ollama, llama.cpp).
 
 ```typescript
-import { createStreamingProxiedFetch } from '../shared/proxy-fetch'
+import { createStreamingProxiedFetch } from "../shared/proxy-fetch";
 
-const streamFetch = createStreamingProxiedFetch()
+const streamFetch = createStreamingProxiedFetch();
 
 const llm = new ChatOpenAI({
   configuration: {
-    baseURL: 'http://localhost:11434/v1',
+    baseURL: "http://localhost:11434/v1",
     fetch: streamFetch, // ← enables token-by-token streaming
   },
-  apiKey: 'ollama',
-  model: 'llama3',
-})
+  apiKey: "ollama",
+  model: "llama3",
+});
 ```
 
 ---
@@ -164,14 +164,14 @@ When called from the background (the normal case), no `fetch` is passed and the 
 
 ```typescript
 // Before
-new ChatOllama({ model: modelId, baseUrl: this.serverUrl })
+new ChatOllama({ model: modelId, baseUrl: this.serverUrl });
 
 // After
 new ChatOpenAI({
   model: modelId,
-  apiKey: 'ollama',
+  apiKey: "ollama",
   configuration: { baseURL: `${this.serverUrl}/v1`, fetch: options?.fetch },
-})
+});
 ```
 
 `ChatOpenAI`'s `configuration` field accepts standard OpenAI `ClientOptions`, which includes `fetch`. This was verified against the LangChain JS documentation.
@@ -224,35 +224,35 @@ The old manifest listed specific ports (`localhost:11434`, `localhost:8080`). Us
 For cases where you want to run a LangChain agent or chain entirely within the content script (e.g., tools that interact with the page DOM), use the proxy fetch and bypass the thread service:
 
 ```typescript
-import { createStreamingProxiedFetch } from '../shared/proxy-fetch'
-import { ChatOpenAI } from '@langchain/openai'
-import { createReactAgent } from '@langchain/langgraph/prebuilt'
-import { tool } from '@langchain/core/tools'
-import { z } from 'zod'
+import { createStreamingProxiedFetch } from "../shared/proxy-fetch";
+import { ChatOpenAI } from "@langchain/openai";
+import { createReactAgent } from "@langchain/langgraph/prebuilt";
+import { tool } from "@langchain/core/tools";
+import { z } from "zod";
 
 const llm = new ChatOpenAI({
-  model: 'llama3',
-  apiKey: 'ollama',
+  model: "llama3",
+  apiKey: "ollama",
   configuration: {
-    baseURL: 'http://localhost:11434/v1',
+    baseURL: "http://localhost:11434/v1",
     fetch: createStreamingProxiedFetch(),
   },
-})
+});
 
 const highlightTool = tool(
   async ({ selector }) => {
     // Can directly access the page DOM — we're in the content script
-    document.querySelector(selector)?.classList.add('superfit-highlight')
-    return 'highlighted'
+    document.querySelector(selector)?.classList.add("superfit-highlight");
+    return "highlighted";
   },
   {
-    name: 'highlight_element',
-    description: 'Highlight a DOM element on the page',
+    name: "highlight_element",
+    description: "Highlight a DOM element on the page",
     schema: z.object({ selector: z.string() }),
   },
-)
+);
 
-const agent = createReactAgent({ llm, tools: [highlightTool] })
+const agent = createReactAgent({ llm, tools: [highlightTool] });
 ```
 
 The full agent loop — tool calls, retries, memory — runs in the content script. Only the raw HTTP to the LLM routes through the background proxy.

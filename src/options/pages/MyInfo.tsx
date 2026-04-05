@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { Box, Tabs, Tab, CircularProgress } from '@mui/material';
-import { ResumeEditor } from '../components/ResumeEditor';
-import { resumeStorage } from '../../shared/storage/resume';
+import React, { useEffect, useState } from "react";
+import { Box, Tabs, Tab, CircularProgress } from "@mui/material";
+import { ResumeEditor } from "../components/ResumeEditor";
+import { resumeStorage } from "../../shared/storage/resume";
 
 export const MyInfo = () => {
   const [activeTab, setActiveTab] = useState(0);
-  const [resumeContent, setResumeContent] = useState('');
+  const [resumeContent, setResumeContent] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -16,7 +16,7 @@ export const MyInfo = () => {
           setResumeContent(data.markdownContent);
         }
       } catch (error) {
-        console.error('Failed to load resume:', error);
+        console.error("Failed to load resume:", error);
       } finally {
         setIsLoading(false);
       }
@@ -35,7 +35,7 @@ export const MyInfo = () => {
 
   if (isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}>
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 10 }}>
         <CircularProgress />
       </Box>
     );
@@ -43,19 +43,14 @@ export const MyInfo = () => {
 
   return (
     <Box>
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
         <Tabs value={activeTab} onChange={handleTabChange}>
           <Tab label="Resume" />
           <Tab label="Profile (Coming Soon)" disabled />
         </Tabs>
       </Box>
 
-      {activeTab === 0 && (
-        <ResumeEditor 
-          initialContent={resumeContent} 
-          onSave={handleSaveResume} 
-        />
-      )}
+      {activeTab === 0 && <ResumeEditor initialContent={resumeContent} onSave={handleSaveResume} />}
     </Box>
   );
 };

@@ -23,7 +23,4 @@ Do not include any explanation — just call the tool with the field value.
 ## Field
 You are filling in the field: "{{fieldLabel}}"
 {{/fieldLabel}}
-`
-
-
-
+`;

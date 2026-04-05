@@ -1,6 +1,6 @@
 export interface StoredLLMConfig {
   providerId: string;
-  jsonStrategy: 'native' | 'extract' | 'two-stage'; // New field
+  jsonStrategy: "native" | "extract" | "two-stage"; // New field
   providerConfigs: {
     [providerId: string]: {
       config: Record<string, unknown>;
@@ -10,7 +10,7 @@ export interface StoredLLMConfig {
   updatedAt: string;
 }
 
-const LLM_CONFIG_KEY = 'llm_config';
+const LLM_CONFIG_KEY = "llm_config";
 
 export const llmStorage = {
   async getConfig(): Promise<StoredLLMConfig | null> {
@@ -25,36 +25,39 @@ export const llmStorage = {
   async updateProviderConfig(providerId: string, settings: Record<string, unknown>): Promise<void> {
     let current = await this.getConfig();
     const now = new Date().toISOString();
-      if(!current){
-         current = {
-          providerId,
-          jsonStrategy: 'extract', // Default strategy
-          providerConfigs: {
-            [providerId]: {
-              config: settings,
-              modelId: ''
-            }
+    if (!current) {
+      current = {
+        providerId,
+        jsonStrategy: "extract", // Default strategy
+        providerConfigs: {
+          [providerId]: {
+            config: settings,
+            modelId: "",
           },
-          updatedAt: now
-        };
-   
-      }
-      current.providerId = providerId;
-      if (!current.providerConfigs[providerId]) {
-        current.providerConfigs[providerId] = { config: {}, modelId: '' };
-      }
-      current.providerConfigs[providerId].config = settings;
-      current.updatedAt = now;
-      await this.saveConfig(current);
+        },
+        updatedAt: now,
+      };
+    }
+    current.providerId = providerId;
+    if (!current.providerConfigs[providerId]) {
+      current.providerConfigs[providerId] = { config: {}, modelId: "" };
+    }
+    current.providerConfigs[providerId].config = settings;
+    current.updatedAt = now;
+    await this.saveConfig(current);
   },
 
-  async setActiveModel(providerId: string, modelId: string, jsonStrategy: 'native' | 'extract' | 'two-stage' = 'extract'): Promise<void> {
+  async setActiveModel(
+    providerId: string,
+    modelId: string,
+    jsonStrategy: "native" | "extract" | "two-stage" = "extract",
+  ): Promise<void> {
     const current = await this.getConfig();
     const now = new Date().toISOString();
 
     if (current) {
       if (!current.providerConfigs[providerId]) {
-        current.providerConfigs[providerId] = { config: {}, modelId: '' };
+        current.providerConfigs[providerId] = { config: {}, modelId: "" };
       }
       current.providerConfigs[providerId].modelId = modelId;
       current.jsonStrategy = jsonStrategy;
@@ -67,11 +70,11 @@ export const llmStorage = {
         providerConfigs: {
           [providerId]: {
             config: {},
-            modelId
-          }
+            modelId,
+          },
         },
-        updatedAt: now
+        updatedAt: now,
       });
     }
-  }
+  },
 };

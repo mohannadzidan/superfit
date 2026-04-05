@@ -1,17 +1,25 @@
-import React from 'react';
-import { FormControl, InputLabel, Select, MenuItem, SelectChangeEvent, Box, Typography } from '@mui/material';
-import { ListLLMProvidersResponse } from '../../shared/messaging/types';
+import React from "react";
+import {
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  SelectChangeEvent,
+  Box,
+  Typography,
+} from "@mui/material";
+import { ListLLMProvidersResponse } from "../../shared/messaging/types";
 
 interface ProviderSelectorProps {
-  providers: ListLLMProvidersResponse['providers'];
+  providers: ListLLMProvidersResponse["providers"];
   selectedProviderId: string;
   onSelect: (providerId: string) => void;
 }
 
-export const ProviderSelector: React.FC<ProviderSelectorProps> = ({ 
-  providers, 
-  selectedProviderId, 
-  onSelect 
+export const ProviderSelector: React.FC<ProviderSelectorProps> = ({
+  providers,
+  selectedProviderId,
+  onSelect,
 }) => {
   const handleChange = (event: SelectChangeEvent) => {
     onSelect(event.target.value as string);

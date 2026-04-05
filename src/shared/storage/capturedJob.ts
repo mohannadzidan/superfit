@@ -1,6 +1,6 @@
-import { JobPostingInfo } from '../../adapters/types';
+import { JobPostingInfo } from "../../adapters/types";
 
-const CAPTURED_JOB_KEY = 'captured_job';
+const CAPTURED_JOB_KEY = "captured_job";
 
 export const capturedJobStorage = {
   async get(): Promise<JobPostingInfo | null> {

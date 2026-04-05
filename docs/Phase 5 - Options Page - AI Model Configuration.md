@@ -58,21 +58,21 @@ flowchart TB
 ```typescript
 interface ProviderSelectorProps {
   /** List of available providers */
-  providers: ProviderInfo[]
+  providers: ProviderInfo[];
 
   /** Currently selected provider ID */
-  selectedProviderId: string | null
+  selectedProviderId: string | null;
 
   /** Callback when provider is selected */
-  onSelect: (providerId: string) => void
+  onSelect: (providerId: string) => void;
 }
 
 interface ProviderInfo {
-  providerId: string
-  providerName: string
-  description: string
-  isAvailable: boolean
-  status: 'connected' | 'disconnected' | 'checking'
+  providerId: string;
+  providerName: string;
+  description: string;
+  isAvailable: boolean;
+  status: "connected" | "disconnected" | "checking";
 }
 ```
 
@@ -81,19 +81,19 @@ interface ProviderInfo {
 ```typescript
 interface ProviderConfigFormProps {
   /** Configuration schema from provider */
-  schema: ProviderConfigSchema
+  schema: ProviderConfigSchema;
 
   /** Current configuration values */
-  values: Record<string, unknown>
+  values: Record<string, unknown>;
 
   /** Callback when values change */
-  onChange: (values: Record<string, unknown>) => void
+  onChange: (values: Record<string, unknown>) => void;
 
   /** Callback to test connection */
-  onTestConnection: () => Promise<boolean>
+  onTestConnection: () => Promise<boolean>;
 
   /** Current connection status */
-  connectionStatus: 'connected' | 'disconnected' | 'checking'
+  connectionStatus: "connected" | "disconnected" | "checking";
 }
 ```
 
@@ -102,22 +102,22 @@ interface ProviderConfigFormProps {
 ```typescript
 interface ModelSelectorProps {
   /** Available models from provider */
-  models: LLMModel[]
+  models: LLMModel[];
 
   /** Currently selected model ID */
-  selectedModelId: string | null
+  selectedModelId: string | null;
 
   /** Callback when model is selected */
-  onSelect: (modelId: string) => void
+  onSelect: (modelId: string) => void;
 
   /** Callback to refresh model list */
-  onRefresh: () => Promise<void>
+  onRefresh: () => Promise<void>;
 
   /** Loading state */
-  isLoading: boolean
+  isLoading: boolean;
 
   /** Whether provider is connected */
-  isProviderConnected: boolean
+  isProviderConnected: boolean;
 }
 ```
 
@@ -210,30 +210,30 @@ flowchart TB
 ```typescript
 // Test provider connection
 interface TestConnectionMessage {
-  type: 'TEST_LLM_CONNECTION'
+  type: "TEST_LLM_CONNECTION";
   payload: {
-    providerId: string
-    config: Record<string, unknown>
-  }
+    providerId: string;
+    config: Record<string, unknown>;
+  };
 }
 
 interface TestConnectionResponse {
-  success: boolean
-  error?: string
+  success: boolean;
+  error?: string;
 }
 
 // Get available models
 interface GetModelsMessage {
-  type: 'GET_LLM_MODELS'
+  type: "GET_LLM_MODELS";
   payload: {
-    providerId: string
-  }
+    providerId: string;
+  };
 }
 
 interface GetModelsResponse {
-  success: boolean
-  models?: LLMModel[]
-  error?: string
+  success: boolean;
+  models?: LLMModel[];
+  error?: string;
 }
 ```
 
