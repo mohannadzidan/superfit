@@ -1,10 +1,10 @@
 export interface ResumeData {
   /** Markdown content of the resume */
-  markdownContent: string;
-  
+  markdownContent: string
+
   /** ISO timestamp of last modification */
-  lastModified: string;
-  
+  lastModified: string
+
   /** Data version for future migrations */
-  version: number;
+  version: number
 }

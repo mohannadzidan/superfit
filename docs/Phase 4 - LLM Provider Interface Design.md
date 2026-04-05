@@ -57,13 +57,13 @@ classDiagram
 
 export interface LLMModel {
   /** Unique model identifier (e.g., "llama3.2:latest") */
-  modelId: string;
-  
+  modelId: string
+
   /** Human-readable display name */
-  displayName: string;
-  
+  displayName: string
+
   /** Optional description */
-  description?:  string;
+  description?: string
 }
 ```
 
@@ -74,16 +74,16 @@ export interface LLMModel {
 
 export interface CompletionRequest {
   /** The prompt to send to the model */
-  prompt: string;
-  
+  prompt: string
+
   /** Model identifier to use */
-  model: string;
-  
+  model: string
+
   /** Optional system prompt */
-  systemPrompt?: string;
-  
+  systemPrompt?: string
+
   /** Temperature for response randomness (0.0-1.0) */
-  temperature?:  number;
+  temperature?: number
 }
 ```
 
@@ -94,16 +94,16 @@ export interface CompletionRequest {
 
 export interface CompletionResponse {
   /** Generated text response */
-  text:  string;
-  
+  text: string
+
   /** Model used for generation */
-  model: string;
-  
+  model: string
+
   /** Whether generation completed successfully */
-  success: boolean;
-  
+  success: boolean
+
   /** Error message if success is false */
-  error?: string;
+  error?: string
 }
 ```
 
@@ -114,35 +114,35 @@ export interface CompletionResponse {
 
 export interface LLMProvider {
   /** Unique identifier for this provider */
-  readonly providerId: string;
-  
+  readonly providerId: string
+
   /** Human-readable provider name */
-  readonly providerName: string;
-  
+  readonly providerName: string
+
   /**
    * Check if provider is available and properly configured
    */
-  isAvailable(): Promise<boolean>;
-  
+  isAvailable(): Promise<boolean>
+
   /**
    * Get list of models available from this provider
    */
-  getAvailableModels(): Promise<LLMModel[]>;
-  
+  getAvailableModels(): Promise<LLMModel[]>
+
   /**
    * Generate a completion using the specified model
    */
-  generateCompletion(request: CompletionRequest): Promise<CompletionResponse>;
-  
+  generateCompletion(request: CompletionRequest): Promise<CompletionResponse>
+
   /**
    * Get configuration options for this provider
    */
-  getConfigSchema(): ProviderConfigSchema;
-  
+  getConfigSchema(): ProviderConfigSchema
+
   /**
    * Update provider configuration
    */
-  configure(config: Record<string, unknown>): Promise<void>;
+  configure(config: Record<string, unknown>): Promise<void>
 }
 ```
 
@@ -152,27 +152,27 @@ export interface LLMProvider {
 // src/llm/types.ts
 
 export interface ProviderConfigSchema {
-  fields: ProviderConfigField[];
+  fields: ProviderConfigField[]
 }
 
 export interface ProviderConfigField {
   /** Field key in config object */
-  key: string;
-  
+  key: string
+
   /** Display label */
-  label:  string;
-  
+  label: string
+
   /** Field type */
-  type: 'text' | 'url' | 'password' | 'number' | 'boolean';
-  
+  type: 'text' | 'url' | 'password' | 'number' | 'boolean'
+
   /** Whether field is required */
-  required: boolean;
-  
+  required: boolean
+
   /** Default value */
-  defaultValue?: unknown;
-  
+  defaultValue?: unknown
+
   /** Help text */
-  description?: string;
+  description?: string
 }
 ```
 
@@ -185,22 +185,22 @@ export interface IProviderRegistry {
   /**
    * Register a new LLM provider
    */
-  register(provider: LLMProvider): void;
-  
+  register(provider: LLMProvider): void
+
   /**
    * Get a provider by ID
    */
-  getProvider(providerId: string): LLMProvider | null;
-  
+  getProvider(providerId: string): LLMProvider | null
+
   /**
    * Get all registered providers
    */
-  getAllProviders(): LLMProvider[];
-  
+  getAllProviders(): LLMProvider[]
+
   /**
    * Get all available (configured and reachable) providers
    */
-  getAvailableProviders(): Promise<LLMProvider[]>;
+  getAvailableProviders(): Promise<LLMProvider[]>
 }
 ```
 
@@ -213,30 +213,28 @@ export interface ILLMService {
   /**
    * Initialize service with a specific provider and model
    */
-  initialize(providerId: string, modelId: string): Promise<void>;
-  
+  initialize(providerId: string, modelId: string): Promise<void>
+
   /**
    * Generate completion using current configuration
    */
-  generateCompletion(
-    request:  Omit<CompletionRequest, 'model'>
-  ): Promise<CompletionResponse>;
-  
+  generateCompletion(request: Omit<CompletionRequest, 'model'>): Promise<CompletionResponse>
+
   /**
    * Get current configuration
    */
-  getCurrentConfig(): LLMConfig | null;
-  
+  getCurrentConfig(): LLMConfig | null
+
   /**
    * Load configuration from storage
    */
-  loadFromStorage(): Promise<void>;
+  loadFromStorage(): Promise<void>
 }
 
 export interface LLMConfig {
-  providerId: string;
-  modelId: string;
-  updatedAt: string;
+  providerId: string
+  modelId: string
+  updatedAt: string
 }
 ```
 
@@ -247,16 +245,16 @@ export interface LLMConfig {
 ```typescript
 interface OllamaConfig {
   /** Ollama server URL (default: http://localhost:11434) */
-  serverUrl:  string;
+  serverUrl: string
 }
 ```
 
 ### API Endpoints Used
 
-| Endpoint            | Method | Purpose                      |
-|---------------------|--------|------------------------------|
-| `/api/tags`         | GET    | List available models        |
-| `/api/generate`     | POST   | Generate completion          |
+| Endpoint        | Method | Purpose               |
+| --------------- | ------ | --------------------- |
+| `/api/tags`     | GET    | List available models |
+| `/api/generate` | POST   | Generate completion   |
 
 ### Ollama API Request/Response
 
@@ -264,28 +262,28 @@ interface OllamaConfig {
 // GET /api/tags response
 interface OllamaTagsResponse {
   models: Array<{
-    name: string;
-    modified_at: string;
-    size: number;
-  }>;
+    name: string
+    modified_at: string
+    size: number
+  }>
 }
 
 // POST /api/generate request
 interface OllamaGenerateRequest {
-  model: string;
-  prompt: string;
-  system?: string;
-  stream:  false;  // MVP uses non-streaming
+  model: string
+  prompt: string
+  system?: string
+  stream: false // MVP uses non-streaming
   options?: {
-    temperature?:  number;
-  };
+    temperature?: number
+  }
 }
 
 // POST /api/generate response
 interface OllamaGenerateResponse {
-  model: string;
-  response: string;
-  done: boolean;
+  model: string
+  response: string
+  done: boolean
 }
 ```
 
@@ -317,23 +315,23 @@ sequenceDiagram
 // Storage key: "llm_config"
 
 interface StoredLLMConfig {
-  providerId: string;
-  modelId: string;
+  providerId: string
+  modelId: string
   providerConfigs: {
-    [providerId: string]: Record<string, unknown>;
-  };
-  updatedAt: string;
+    [providerId: string]: Record<string, unknown>
+  }
+  updatedAt: string
 }
 ```
 
 ## Error Handling
 
-| Error Type           | Handling Strategy                              |
-|----------------------|------------------------------------------------|
-| Connection refused   | Return user-friendly error, suggest checking Ollama |
-| Timeout              | Return timeout error, allow retry              |
-| Model not found      | Prompt user to select valid model              |
-| Invalid response     | Log error, return generic failure              |
+| Error Type         | Handling Strategy                                   |
+| ------------------ | --------------------------------------------------- |
+| Connection refused | Return user-friendly error, suggest checking Ollama |
+| Timeout            | Return timeout error, allow retry                   |
+| Model not found    | Prompt user to select valid model                   |
+| Invalid response   | Log error, return generic failure                   |
 
 ## Phase 4 Deliverables
 

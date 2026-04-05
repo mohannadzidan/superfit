@@ -221,3 +221,32 @@ Please ensure all new logic is covered by unit tests particularly within the `ll
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+running local qwen3.5 4b using llama.cpp
+
+```sh
+llama-server -hf unsloth/Qwen3.5-4B-GGUF:Q4_K_M \
+    --n-gpu-layers 100 \
+    --cache-type-k q4_0 --cache-type-v q4_0 \
+    --ctx-size 16384 \
+    --parallel 4 \
+    --ubatch-size 4096 \
+    --port 9091 \
+    --chat-template-kwargs '{"enable_thinking": false}' \
+    --cache-type-k q4_0 \
+    --cache-type-v q4_0 \
+    --sleep-idle-seconds 5
+
+llama-server -hf daniloreddy/Qwen3.5-2B_GGUF:Q4_K_M \
+    --n-gpu-layers 100 \
+    --ctx-size 32768 \
+    --parallel 8 \
+    --batch-size 512 \
+    --ubatch-size 512 \
+    --flash-attn on \
+    --cache-type-k q4_0 \
+    --cache-type-v q4_0 \
+    --port 9091 \
+    --chat-template-kwargs '{"enable_thinking": false}' \
+    --sleep-idle-seconds 5
+```

@@ -1,6 +1,7 @@
 # External Services and Integrations
 
 ## LinkedIn web page integration
+
 - What it is and why used:
   - SuperFit reads job content directly from LinkedIn job pages so users do not need to manually copy job descriptions.
 - Integration owner:
@@ -10,6 +11,7 @@
   - **LinkedInAdapter** class in **src/adapters/linkedin/index.ts**.
 
 ## Ollama integration (local model runtime)
+
 - What it is and why used:
   - Ollama enables local inference on user hardware, aligning with privacy-first usage patterns.
 - Integration owner:
@@ -19,6 +21,7 @@
   - **OllamaProvider** class in **src/llm/providers/ollama.ts**.
 
 ## Gemini integration (cloud model runtime)
+
 - What it is and why used:
   - Gemini provides a hosted AI model option when users prefer or require cloud-based models.
 - Integration owner:
@@ -28,6 +31,7 @@
   - **GeminiProvider** class in **src/llm/providers/gemini.ts**.
 
 ## Chrome Extension Platform APIs
+
 - What it is and why used:
   - Chrome APIs provide local persistence, background/content communication, and extension lifecycle surfaces required by Manifest V3 apps.
 - Integration owner:
@@ -39,6 +43,7 @@
   - **ThreadService** in **src/background/services/thread.ts** wraps port-based communication.
 
 ## Prompt templating and content-conversion libraries
+
 - What it is and why used:
   - Mustache renders prompt variables into prompt templates.
   - Turndown converts extracted HTML descriptions into cleaner text/Markdown before AI processing.

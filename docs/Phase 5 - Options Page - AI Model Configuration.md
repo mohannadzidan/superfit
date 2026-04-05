@@ -2,7 +2,7 @@
 
 ## Objective
 
-Provide a user interface for configuring the LLM provider and model selection.  For MVP, only Ollama is supported, but the UI architecture accommodates future providers. 
+Provide a user interface for configuring the LLM provider and model selection. For MVP, only Ollama is supported, but the UI architecture accommodates future providers.
 
 ## Navigation Context
 
@@ -12,13 +12,13 @@ flowchart LR
         MI[My Information]
         AI[AI Model ●]
     end
-    
+
     subgraph MainContent["AI Model Section"]
         ProviderConfig[Provider Configuration]
         ModelSelect[Model Selection]
         ConnTest[Connection Status]
     end
-    
+
     AI --> MainContent
 ```
 
@@ -31,21 +31,21 @@ flowchart TB
             ProviderCard[Ollama Provider Card]
             ProviderStatus[Connection Status]
         end
-        
+
         subgraph ConfigArea["Provider Configuration"]
             URLInput[Server URL Input]
             TestButton[Test Connection Button]
         end
-        
+
         subgraph ModelArea["Model Selection"]
             ModelDropdown[Model Dropdown]
             ModelInfo[Model Information]
             RefreshButton[Refresh Models Button]
         end
-        
+
         SaveButton[Save Configuration]
     end
-    
+
     ProviderArea --> ConfigArea
     ConfigArea --> ModelArea
     ModelArea --> SaveButton
@@ -58,21 +58,21 @@ flowchart TB
 ```typescript
 interface ProviderSelectorProps {
   /** List of available providers */
-  providers: ProviderInfo[];
-  
+  providers: ProviderInfo[]
+
   /** Currently selected provider ID */
-  selectedProviderId: string | null;
-  
+  selectedProviderId: string | null
+
   /** Callback when provider is selected */
-  onSelect: (providerId:  string) => void;
+  onSelect: (providerId: string) => void
 }
 
 interface ProviderInfo {
-  providerId: string;
-  providerName:  string;
-  description: string;
-  isAvailable:  boolean;
-  status: 'connected' | 'disconnected' | 'checking';
+  providerId: string
+  providerName: string
+  description: string
+  isAvailable: boolean
+  status: 'connected' | 'disconnected' | 'checking'
 }
 ```
 
@@ -81,19 +81,19 @@ interface ProviderInfo {
 ```typescript
 interface ProviderConfigFormProps {
   /** Configuration schema from provider */
-  schema: ProviderConfigSchema;
-  
+  schema: ProviderConfigSchema
+
   /** Current configuration values */
-  values: Record<string, unknown>;
-  
+  values: Record<string, unknown>
+
   /** Callback when values change */
-  onChange: (values: Record<string, unknown>) => void;
-  
+  onChange: (values: Record<string, unknown>) => void
+
   /** Callback to test connection */
-  onTestConnection: () => Promise<boolean>;
-  
+  onTestConnection: () => Promise<boolean>
+
   /** Current connection status */
-  connectionStatus: 'connected' | 'disconnected' | 'checking';
+  connectionStatus: 'connected' | 'disconnected' | 'checking'
 }
 ```
 
@@ -102,22 +102,22 @@ interface ProviderConfigFormProps {
 ```typescript
 interface ModelSelectorProps {
   /** Available models from provider */
-  models: LLMModel[];
-  
+  models: LLMModel[]
+
   /** Currently selected model ID */
-  selectedModelId: string | null;
-  
+  selectedModelId: string | null
+
   /** Callback when model is selected */
-  onSelect: (modelId: string) => void;
-  
+  onSelect: (modelId: string) => void
+
   /** Callback to refresh model list */
-  onRefresh: () => Promise<void>;
-  
+  onRefresh: () => Promise<void>
+
   /** Loading state */
-  isLoading: boolean;
-  
+  isLoading: boolean
+
   /** Whether provider is connected */
-  isProviderConnected: boolean;
+  isProviderConnected: boolean
 }
 ```
 
@@ -125,28 +125,28 @@ interface ModelSelectorProps {
 
 ### Provider Card States
 
-| State        | Visual Indicator                          |
-|--------------|-------------------------------------------|
-| Available    | Green checkmark, "Connected" label        |
-| Unavailable  | Red X, "Not Connected" label              |
-| Checking     | Spinner, "Checking..." label              |
+| State       | Visual Indicator                   |
+| ----------- | ---------------------------------- |
+| Available   | Green checkmark, "Connected" label |
+| Unavailable | Red X, "Not Connected" label       |
+| Checking    | Spinner, "Checking..." label       |
 
 ### Model Dropdown States
 
-| State              | Behavior                                |
-|--------------------|-----------------------------------------|
-| Provider connected | Shows model list, enabled               |
+| State                 | Behavior                                 |
+| --------------------- | ---------------------------------------- |
+| Provider connected    | Shows model list, enabled                |
 | Provider disconnected | Disabled, shows "Connect provider first" |
-| Loading models     | Shows spinner                           |
-| No models          | Shows "No models found"                 |
+| Loading models        | Shows spinner                            |
+| No models             | Shows "No models found"                  |
 
 ## Ollama-Specific UI
 
 ### Configuration Fields
 
-| Field       | Type  | Default                    | Required |
-|-------------|-------|----------------------------|----------|
-| Server URL  | URL   | `http://localhost:11434`   | Yes      |
+| Field      | Type | Default                  | Required |
+| ---------- | ---- | ------------------------ | -------- |
+| Server URL | URL  | `http://localhost:11434` | Yes      |
 
 ### Test Connection Flow
 
@@ -161,7 +161,7 @@ sequenceDiagram
     UI->>UI: Show "Checking..." state
     UI->>BG: testConnection(serverUrl)
     BG->>Ollama: GET /api/tags
-    
+
     alt Connection successful
         Ollama-->>BG: 200 OK
         BG-->>UI: { success: true, models: [... ] }
@@ -183,22 +183,22 @@ flowchart TB
         UI[AI Model UI]
         LocalState[React State]
     end
-    
+
     subgraph Background["Background Script"]
         LLMService[LLM Service]
         Registry[Provider Registry]
     end
-    
+
     subgraph Storage["Chrome Storage"]
         Config[llm_config]
     end
-    
+
     UI -->|User input| LocalState
     LocalState -->|Save| Storage
     LocalState -->|Test/Refresh| Background
     Background -->|Query| Ollama[(Ollama)]
     Background -->|Results| LocalState
-    
+
     UI -->|Load on mount| Storage
     Storage -->|Initial values| LocalState
 ```
@@ -210,39 +210,39 @@ flowchart TB
 ```typescript
 // Test provider connection
 interface TestConnectionMessage {
-  type: 'TEST_LLM_CONNECTION';
+  type: 'TEST_LLM_CONNECTION'
   payload: {
-    providerId: string;
-    config: Record<string, unknown>;
-  };
+    providerId: string
+    config: Record<string, unknown>
+  }
 }
 
 interface TestConnectionResponse {
-  success: boolean;
-  error?: string;
+  success: boolean
+  error?: string
 }
 
 // Get available models
 interface GetModelsMessage {
-  type: 'GET_LLM_MODELS';
-  payload:  {
-    providerId: string;
-  };
+  type: 'GET_LLM_MODELS'
+  payload: {
+    providerId: string
+  }
 }
 
 interface GetModelsResponse {
-  success: boolean;
-  models?:  LLMModel[];
-  error?: string;
+  success: boolean
+  models?: LLMModel[]
+  error?: string
 }
 ```
 
 ## Validation Rules
 
-| Field       | Validation                                   |
-|-------------|----------------------------------------------|
-| Server URL  | Must be valid URL, must start with http(s):// |
-| Model       | Must be selected from available list         |
+| Field      | Validation                                    |
+| ---------- | --------------------------------------------- |
+| Server URL | Must be valid URL, must start with http(s):// |
+| Model      | Must be selected from available list          |
 
 ## Phase 5 Deliverables
 

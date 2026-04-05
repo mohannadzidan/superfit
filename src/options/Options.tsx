@@ -1,26 +1,28 @@
 import { useState } from 'react';
-import { 
-  Box, 
-  CssBaseline, 
-  Drawer, 
-  List, 
-  ListItem, 
-  ListItemButton, 
-  ListItemIcon, 
-  ListItemText, 
-  Toolbar, 
-  AppBar, 
-  Typography 
+import {
+  Box,
+  CssBaseline,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Toolbar,
+  AppBar,
+  Typography
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import TuneIcon from '@mui/icons-material/Tune';
+import LabelIcon from '@mui/icons-material/Label';
 import { MyInfo } from './pages/MyInfo';
 import { AIModel } from './pages/AIModel';
+import { Keywords } from './pages/Keywords';
 
 const drawerWidth = 240;
 
 export const Options = () => {
-  const [activePage, setActivePage] = useState<'info' | 'model'>('info');
+  const [activePage, setActivePage] = useState<'info' | 'model' | 'keywords'>('info');
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -55,7 +57,7 @@ export const Options = () => {
               </ListItemButton>
             </ListItem>
             <ListItem disablePadding>
-              <ListItemButton 
+              <ListItemButton
                 selected={activePage === 'model'}
                 onClick={() => setActivePage('model')}
               >
@@ -65,6 +67,17 @@ export const Options = () => {
                 <ListItemText primary="AI Model" />
               </ListItemButton>
             </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                selected={activePage === 'keywords'}
+                onClick={() => setActivePage('keywords')}
+              >
+                <ListItemIcon>
+                  <LabelIcon />
+                </ListItemIcon>
+                <ListItemText primary="Keywords" />
+              </ListItemButton>
+            </ListItem>
           </List>
         </Box>
       </Drawer>
@@ -72,6 +85,7 @@ export const Options = () => {
         <Toolbar />
         {activePage === 'info' && <MyInfo />}
         {activePage === 'model' && <AIModel />}
+        {activePage === 'keywords' && <Keywords />}
       </Box>
     </Box>
   );
