@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'keyword_highlights';
+const STORAGE_KEY = "keyword_highlights";
 
 export const keywordsStorage = {
   async get(): Promise<string[]> {

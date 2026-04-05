@@ -39,15 +39,15 @@ classDiagram
 ```typescript
 interface JobPostingInfo {
   /** Unique identifier for the job posting */
-  id: string
+  id: string;
   /** Full URL of the job posting */
-  jobUrl: string
+  jobUrl: string;
   /** Job title */
-  jobTitle: string
+  jobTitle: string;
   /** Full job description text */
-  jobDescription: string
+  jobDescription: string;
   /** Company name (optional for MVP) */
-  companyName?: string
+  companyName?: string;
 }
 ```
 
@@ -56,28 +56,28 @@ interface JobPostingInfo {
 ```typescript
 interface PlatformAdapter {
   /** Unique name identifier for the platform */
-  readonly name: string
+  readonly name: string;
 
   /**
    * Check if this adapter can handle the given URL
    * @param url - Current page URL
    * @returns true if this adapter should be used
    */
-  matches(url: string): boolean
+  matches(url: string): boolean;
 
   /**
    * Check if current page is a job posting page
    * Assumes matches() has already returned true
    * @returns true if page contains a job posting
    */
-  isJobPostingPage(): boolean
+  isJobPostingPage(): boolean;
 
   /**
    * Extract job information from the current page
    * Assumes isJobPostingPage() has returned true
    * @returns JobPostingInfo or null if extraction fails
    */
-  extractJobInfo(): JobPostingInfo | null
+  extractJobInfo(): JobPostingInfo | null;
 }
 ```
 
@@ -88,18 +88,18 @@ interface IAdapterRegistry {
   /**
    * Register a new platform adapter
    */
-  register(adapter: PlatformAdapter): void
+  register(adapter: PlatformAdapter): void;
 
   /**
    * Get the appropriate adapter for a given URL
    * @returns The matching adapter or null
    */
-  getAdapter(url: string): PlatformAdapter | null
+  getAdapter(url: string): PlatformAdapter | null;
 
   /**
    * Get all registered adapters
    */
-  getAllAdapters(): PlatformAdapter[]
+  getAllAdapters(): PlatformAdapter[];
 }
 ```
 

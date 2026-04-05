@@ -24,17 +24,17 @@ The `FitScoreResult` has been expanded to provide granular feedback.
 // src/shared/scoring/schema.ts
 export const FitScoreResultSchema = z.object({
   level: z.enum([
-    'NOT_MATCHING',
-    'BARELY_MATCHING',
-    'NEUTRAL_MATCHING',
-    'LIKELY_MATCHING',
-    'SUPER_FIT',
+    "NOT_MATCHING",
+    "BARELY_MATCHING",
+    "NEUTRAL_MATCHING",
+    "LIKELY_MATCHING",
+    "SUPER_FIT",
   ]),
   headline: z.string(), // e.g. "Good potential match"
   explanation: z.string(), // Detailed reasoning
   matchingSkills: z.array(z.string()).optional(),
   missingSkills: z.array(z.string()).optional(),
-})
+});
 ```
 
 ### 3. Updated LLM Prompting

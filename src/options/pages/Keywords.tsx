@@ -1,4 +1,4 @@
-import React, { useEffect, useState, KeyboardEvent } from 'react';
+import React, { useEffect, useState, KeyboardEvent } from "react";
 import {
   Box,
   Chip,
@@ -7,13 +7,13 @@ import {
   Typography,
   InputAdornment,
   IconButton,
-} from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import { keywordsStorage } from '../../shared/storage/keywords';
+} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import { keywordsStorage } from "../../shared/storage/keywords";
 
 export const Keywords = () => {
   const [keywords, setKeywords] = useState<string[]>([]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -26,12 +26,12 @@ export const Keywords = () => {
   const addKeyword = async () => {
     const trimmed = input.trim();
     if (!trimmed || keywords.includes(trimmed)) {
-      setInput('');
+      setInput("");
       return;
     }
     const updated = [...keywords, trimmed];
     setKeywords(updated);
-    setInput('');
+    setInput("");
     await keywordsStorage.set(updated);
   };
 
@@ -42,7 +42,7 @@ export const Keywords = () => {
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       addKeyword();
     }
@@ -50,7 +50,7 @@ export const Keywords = () => {
 
   if (isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}>
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 10 }}>
         <CircularProgress />
       </Box>
     );
@@ -87,18 +87,14 @@ export const Keywords = () => {
         }}
       />
 
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
         {keywords.length === 0 && (
           <Typography variant="body2" color="text.disabled">
             No keywords added yet.
           </Typography>
         )}
         {keywords.map((keyword) => (
-          <Chip
-            key={keyword}
-            label={keyword}
-            onDelete={() => removeKeyword(keyword)}
-          />
+          <Chip key={keyword} label={keyword} onDelete={() => removeKeyword(keyword)} />
         ))}
       </Box>
     </Box>

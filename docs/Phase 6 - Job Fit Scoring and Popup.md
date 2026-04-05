@@ -16,23 +16,23 @@ Implement the core user-facing feature: analyzing job-resume fit and displaying 
 ```typescript
 // src/shared/types/scoring.ts
 
-export type FitScoreLevel = 'NOT_MATCHING' | 'BARELY_MATCHING' | 'LIKELY_MATCHING' | 'SUPER_FIT'
+export type FitScoreLevel = "NOT_MATCHING" | "BARELY_MATCHING" | "LIKELY_MATCHING" | "SUPER_FIT";
 
 export interface FitScoreResult {
   /** Score level */
-  level: FitScoreLevel
+  level: FitScoreLevel;
 
   /** Numeric value (1-4) */
-  value: number
+  value: number;
 
   /** Display label */
-  label: string
+  label: string;
 
   /** ISO timestamp of analysis */
-  analyzedAt: string
+  analyzedAt: string;
 
   /** Job ID this score is for */
-  jobId: string
+  jobId: string;
 }
 ```
 
@@ -115,19 +115,19 @@ Respond with only one of:  "Not matching", "Barely Matching", "Likely Matching",
 // src/shared/scoring/parser.ts
 
 export function parseScoreFromResponse(response: string): FitScoreLevel {
-  const normalized = response.toLowerCase().trim()
+  const normalized = response.toLowerCase().trim();
 
-  if (normalized.includes('super fit')) {
-    return 'SUPER_FIT'
+  if (normalized.includes("super fit")) {
+    return "SUPER_FIT";
   }
-  if (normalized.includes('likely matching')) {
-    return 'LIKELY_MATCHING'
+  if (normalized.includes("likely matching")) {
+    return "LIKELY_MATCHING";
   }
-  if (normalized.includes('barely matching')) {
-    return 'BARELY_MATCHING'
+  if (normalized.includes("barely matching")) {
+    return "BARELY_MATCHING";
   }
   // Default to not matching if unable to parse
-  return 'NOT_MATCHING'
+  return "NOT_MATCHING";
 }
 ```
 
@@ -138,23 +138,23 @@ export function parseScoreFromResponse(response: string): FitScoreLevel {
 ```typescript
 // Request job fit analysis
 interface AnalyzeJobFitMessage {
-  type: 'ANALYZE_JOB_FIT'
+  type: "ANALYZE_JOB_FIT";
   payload: {
-    jobInfo: JobPostingInfo
-  }
+    jobInfo: JobPostingInfo;
+  };
 }
 
 interface AnalyzeJobFitResponse {
-  success: boolean
-  result?: FitScoreResult
-  error?: AnalysisError
+  success: boolean;
+  result?: FitScoreResult;
+  error?: AnalysisError;
 }
 
 type AnalysisError =
-  | { code: 'NO_RESUME'; message: string }
-  | { code: 'LLM_NOT_CONFIGURED'; message: string }
-  | { code: 'LLM_UNAVAILABLE'; message: string }
-  | { code: 'ANALYSIS_FAILED'; message: string }
+  | { code: "NO_RESUME"; message: string }
+  | { code: "LLM_NOT_CONFIGURED"; message: string }
+  | { code: "LLM_UNAVAILABLE"; message: string }
+  | { code: "ANALYSIS_FAILED"; message: string };
 ```
 
 ## Background Script Logic
@@ -215,19 +215,19 @@ flowchart TB
 ```typescript
 interface ScorePopupProps {
   /** Current state of the popup */
-  state: 'loading' | 'success' | 'error'
+  state: "loading" | "success" | "error";
 
   /** Score result (when state is 'success') */
-  result?: FitScoreResult
+  result?: FitScoreResult;
 
   /** Error info (when state is 'error') */
-  error?: AnalysisError
+  error?: AnalysisError;
 
   /** Callback when close button clicked */
-  onClose: () => void
+  onClose: () => void;
 
   /** Callback for error action button */
-  onErrorAction?: () => void
+  onErrorAction?: () => void;
 }
 ```
 
@@ -249,27 +249,27 @@ interface PopupManager {
   /**
    * Show the score popup with loading state
    */
-  showLoading(): void
+  showLoading(): void;
 
   /**
    * Update popup with score result
    */
-  showResult(result: FitScoreResult): void
+  showResult(result: FitScoreResult): void;
 
   /**
    * Show error state
    */
-  showError(error: AnalysisError): void
+  showError(error: AnalysisError): void;
 
   /**
    * Hide and remove the popup
    */
-  hide(): void
+  hide(): void;
 
   /**
    * Check if popup is currently visible
    */
-  isVisible(): boolean
+  isVisible(): boolean;
 }
 ```
 
@@ -311,17 +311,17 @@ interface AnalysisCache {
   /**
    * Get cached result for a job
    */
-  get(jobId: string): FitScoreResult | null
+  get(jobId: string): FitScoreResult | null;
 
   /**
    * Store result in cache
    */
-  set(jobId: string, result: FitScoreResult): void
+  set(jobId: string, result: FitScoreResult): void;
 
   /**
    * Clear all cached results
    */
-  clear(): void
+  clear(): void;
 }
 
 // Cache duration:  1 hour (configurable)

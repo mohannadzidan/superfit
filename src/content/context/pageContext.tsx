@@ -1,6 +1,6 @@
-import { createContext, useContext } from 'react';
-import type { JobPostingInfo } from '../../adapters/types';
-import type { FocusedFieldInfo } from '../inputLabelWatcher';
+import { createContext, useContext } from "react";
+import type { JobPostingInfo } from "../../adapters/types";
+import type { FocusedFieldInfo } from "../inputLabelWatcher";
 
 export interface PageContextValue {
   /** Job info currently detected on this page (auto-detected, not necessarily captured) */

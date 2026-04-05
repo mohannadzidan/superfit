@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Box,
   CssBaseline,
@@ -10,22 +10,22 @@ import {
   ListItemText,
   Toolbar,
   AppBar,
-  Typography
-} from '@mui/material';
-import PersonIcon from '@mui/icons-material/Person';
-import TuneIcon from '@mui/icons-material/Tune';
-import LabelIcon from '@mui/icons-material/Label';
-import { MyInfo } from './pages/MyInfo';
-import { AIModel } from './pages/AIModel';
-import { Keywords } from './pages/Keywords';
+  Typography,
+} from "@mui/material";
+import PersonIcon from "@mui/icons-material/Person";
+import TuneIcon from "@mui/icons-material/Tune";
+import LabelIcon from "@mui/icons-material/Label";
+import { MyInfo } from "./pages/MyInfo";
+import { AIModel } from "./pages/AIModel";
+import { Keywords } from "./pages/Keywords";
 
 const drawerWidth = 240;
 
 export const Options = () => {
-  const [activePage, setActivePage] = useState<'info' | 'model' | 'keywords'>('info');
+  const [activePage, setActivePage] = useState<"info" | "model" | "keywords">("info");
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: "flex" }}>
       <CssBaseline />
       <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
         <Toolbar>
@@ -39,16 +39,16 @@ export const Options = () => {
         sx={{
           width: drawerWidth,
           flexShrink: 0,
-          [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box' },
+          [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: "border-box" },
         }}
       >
         <Toolbar />
-        <Box sx={{ overflow: 'auto' }}>
+        <Box sx={{ overflow: "auto" }}>
           <List>
             <ListItem disablePadding>
-              <ListItemButton 
-                selected={activePage === 'info'} 
-                onClick={() => setActivePage('info')}
+              <ListItemButton
+                selected={activePage === "info"}
+                onClick={() => setActivePage("info")}
               >
                 <ListItemIcon>
                   <PersonIcon />
@@ -58,8 +58,8 @@ export const Options = () => {
             </ListItem>
             <ListItem disablePadding>
               <ListItemButton
-                selected={activePage === 'model'}
-                onClick={() => setActivePage('model')}
+                selected={activePage === "model"}
+                onClick={() => setActivePage("model")}
               >
                 <ListItemIcon>
                   <TuneIcon />
@@ -69,8 +69,8 @@ export const Options = () => {
             </ListItem>
             <ListItem disablePadding>
               <ListItemButton
-                selected={activePage === 'keywords'}
-                onClick={() => setActivePage('keywords')}
+                selected={activePage === "keywords"}
+                onClick={() => setActivePage("keywords")}
               >
                 <ListItemIcon>
                   <LabelIcon />
@@ -81,11 +81,11 @@ export const Options = () => {
           </List>
         </Box>
       </Drawer>
-      <Box component="main" sx={{ flexGrow: 1, p: 3, height: '100vh', overflow: 'hidden' }}>
+      <Box component="main" sx={{ flexGrow: 1, p: 3, height: "100vh", overflow: "hidden" }}>
         <Toolbar />
-        {activePage === 'info' && <MyInfo />}
-        {activePage === 'model' && <AIModel />}
-        {activePage === 'keywords' && <Keywords />}
+        {activePage === "info" && <MyInfo />}
+        {activePage === "model" && <AIModel />}
+        {activePage === "keywords" && <Keywords />}
       </Box>
     </Box>
   );

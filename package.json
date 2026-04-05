@@ -2,25 +2,25 @@
   "name": "superfit",
   "displayName": "SuperFit",
   "version": "0.0.0",
-  "author": "**",
   "description": "",
-  "type": "module",
-  "license": "MIT",
   "keywords": [
     "chrome-extension",
+    "create-chrome-ext",
     "react",
-    "vite",
-    "create-chrome-ext"
+    "vite"
   ],
-  "engines": {
-    "node": ">=14.18.0"
-  },
+  "license": "MIT",
+  "author": "**",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "fmt": "prettier --write '**/*.{tsx,ts,json,css,scss,md}'",
-    "zip": "npm run build && node src/zip.js"
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "zip": "npm run build && node src/zip.js",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
@@ -59,10 +59,15 @@
     "commander": "^14.0.3",
     "gulp": "^5.0.0",
     "gulp-zip": "^6.0.0",
+    "oxfmt": "^0.43.0",
+    "oxlint": "^1.58.0",
     "playwright": "^1.59.1",
     "prettier": "^3.0.3",
     "pug": "^3.0.4",
     "typescript": "^5.2.2",
     "vite": "^5.4.10"
+  },
+  "engines": {
+    "node": ">=14.18.0"
   }
 }

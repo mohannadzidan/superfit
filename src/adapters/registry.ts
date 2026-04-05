@@ -1,8 +1,8 @@
-import { LinkedInAdapter } from './linkedin';
-import { TokyoDevAdapter } from './tokyodev';
-import { PlatformAdapter } from './platform-adapter';
-import { AppWelcomeToTheJungleAdapter } from './app-welcome-to-the-jungle';
-import { WelcomeToTheJungleAdapter } from './welcome-to-the-jungle';
+import { LinkedInAdapter } from "./linkedin";
+import { TokyoDevAdapter } from "./tokyodev";
+import { PlatformAdapter } from "./platform-adapter";
+import { AppWelcomeToTheJungleAdapter } from "./app-welcome-to-the-jungle";
+import { WelcomeToTheJungleAdapter } from "./welcome-to-the-jungle";
 
 export class AdapterRegistry {
   private adapters: PlatformAdapter[] = [];
@@ -11,7 +11,7 @@ export class AdapterRegistry {
    * Register a new platform adapter
    */
   register(adapter: PlatformAdapter): void {
-    if (this.adapters.some(a => a.name === adapter.name)) {
+    if (this.adapters.some((a) => a.name === adapter.name)) {
       console.warn(`Adapter with name ${adapter.name} is already registered.`);
       return;
     }
@@ -24,14 +24,14 @@ export class AdapterRegistry {
    * @returns The matching adapter or null
    */
   getAdapter(url: string): PlatformAdapter | null {
-    return this.adapters.find(adapter => adapter.matches(url)) || null;
+    return this.adapters.find((adapter) => adapter.matches(url)) || null;
   }
 
   /**
    * Get an adapter by its name
    */
   getAdapterByName(name: string): PlatformAdapter | null {
-    return this.adapters.find(adapter => adapter.name === name) || null;
+    return this.adapters.find((adapter) => adapter.name === name) || null;
   }
 
   /**
@@ -45,7 +45,7 @@ export class AdapterRegistry {
 // Singleton instance
 export const adapterRegistry = new AdapterRegistry();
 
-adapterRegistry.register(new LinkedInAdapter())
-adapterRegistry.register(new TokyoDevAdapter())
-adapterRegistry.register(new AppWelcomeToTheJungleAdapter())
-adapterRegistry.register(new WelcomeToTheJungleAdapter())
+adapterRegistry.register(new LinkedInAdapter());
+adapterRegistry.register(new TokyoDevAdapter());
+adapterRegistry.register(new AppWelcomeToTheJungleAdapter());
+adapterRegistry.register(new WelcomeToTheJungleAdapter());

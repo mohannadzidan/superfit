@@ -1,60 +1,60 @@
-import { ThemeOptions } from '@mui/material'
+import { ThemeOptions } from "@mui/material";
 
 export const theme: ThemeOptions = {
   palette: {
-    mode: 'light',
+    mode: "light",
     primary: {
-      main: '#1E2C84',
+      main: "#1E2C84",
     },
     secondary: {
-      main: '#E7B72F',
+      main: "#E7B72F",
     },
     warning: {
-      main: '#E7B72F',
+      main: "#E7B72F",
     },
     info: {
-      main: '#1298DF',
+      main: "#1298DF",
     },
   },
   // @ts-expect-error not an error
   props: {
     MuiButton: {
-      size: 'small',
+      size: "small",
     },
     MuiButtonGroup: {
-      size: 'small',
+      size: "small",
     },
     MuiCheckbox: {
-      size: 'small',
+      size: "small",
     },
     MuiFab: {
-      size: 'small',
+      size: "small",
     },
     MuiFormControl: {
-      margin: 'dense',
-      size: 'small',
+      margin: "dense",
+      size: "small",
     },
     MuiFormHelperText: {
-      margin: 'dense',
+      margin: "dense",
     },
     MuiIconButton: {
-      size: 'small',
+      size: "small",
     },
     MuiInputBase: {
-      margin: 'dense',
+      margin: "dense",
     },
     MuiInputLabel: {
-      margin: 'dense',
+      margin: "dense",
     },
     MuiRadio: {
-      size: 'small',
+      size: "small",
     },
     MuiSwitch: {
-      size: 'small',
+      size: "small",
     },
     MuiTextField: {
-      margin: 'dense',
-      size: 'small',
+      margin: "dense",
+      size: "small",
     },
   },
   components: {
@@ -73,12 +73,12 @@ export const theme: ThemeOptions = {
         },
         switchBase: {
           padding: 1,
-          '&$checked, &$colorPrimary$checked, &$colorSecondary$checked': {
-            transform: 'translateX(16px)',
-            color: '#fff',
-            '& + $track': {
+          "&$checked, &$colorPrimary$checked, &$colorSecondary$checked": {
+            transform: "translateX(16px)",
+            color: "#fff",
+            "& + $track": {
               opacity: 1,
-              border: 'none',
+              border: "none",
             },
           },
         },
@@ -88,13 +88,13 @@ export const theme: ThemeOptions = {
         },
         track: {
           borderRadius: 13,
-          border: '1px solid #bdbdbd',
-          backgroundColor: '#fafafa',
+          border: "1px solid #bdbdbd",
+          backgroundColor: "#fafafa",
           opacity: 1,
           transition:
-            'background-color 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms,border 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms',
+            "background-color 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms,border 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms",
         },
       },
     },
   },
-}
+};

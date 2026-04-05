@@ -10,6 +10,7 @@ disable-model-invocation: true
 ## Overview
 
 A `PlatformAdapter` teaches SuperFit how to extract job postings from a specific job board's DOM. Each adapter:
+
 1. Detects whether the current URL/page belongs to its platform
 2. Extracts structured `JobPostingInfo` from the DOM
 3. Optionally locates the apply button and job description container
@@ -18,18 +19,18 @@ A `PlatformAdapter` teaches SuperFit how to extract job postings from a specific
 
 ```ts
 export interface JobPostingInfo {
-  id: string;           // Unique job ID (from URL or DOM)
-  jobUrl: string;       // window.location.href
+  id: string; // Unique job ID (from URL or DOM)
+  jobUrl: string; // window.location.href
   jobTitle: string;
   jobDescription: string; // Markdown-converted description
   companyName?: string;
   location?: string;
-  platform: string;     // Must match adapter.name
+  platform: string; // Must match adapter.name
 }
 
 export interface PlatformAdapter {
-  readonly name: string;        // Unique lowercase identifier, e.g. 'indeed'
-  readonly icon?: string;       // SVG string (white fill, for dark backgrounds)
+  readonly name: string; // Unique lowercase identifier, e.g. 'indeed'
+  readonly icon?: string; // SVG string (white fill, for dark backgrounds)
 
   matches(url: string): boolean;
   isJobPostingPage(): boolean;
@@ -46,11 +47,12 @@ export interface PlatformAdapter {
 ### Step 1 — Inspect the target job board
 
 Before writing any code, ask the user to open a sample job posting page and share:
+
 - The URL pattern for job postings (e.g. `indeed.com/viewjob?jk=...`)
 - The CSS selectors or DOM structure for: job title, company name, description container, location, and apply button
 - How the job ID can be derived (URL param, path segment, or DOM attribute)
 
-If the user hasn't provided this, ask: *"Can you share a sample job posting URL and the relevant DOM selectors or HTML structure?"*
+If the user hasn't provided this, ask: _"Can you share a sample job posting URL and the relevant DOM selectors or HTML structure?"_
 
 ### Step 2 — Create the adapter file
 
@@ -174,22 +176,26 @@ pnpm build
 ## Key Patterns from Existing Adapters
 
 ### htmlToMarkdown
+
 Both `LinkedInAdapter` and `TokyoDevAdapter` use the same `htmlToMarkdown` helper. Always convert HTML description containers to Markdown — raw HTML confuses LLMs. The regex chain cleans up bold markers, trailing whitespace, consecutive newlines, and list bullets.
 
 ### extractJobId
+
 Try URL query params first (e.g. `?currentJobId=123`), then regex on pathname (e.g. `/view/(\d+)`). Fall back to `'unknown'` — never return an empty string as an ID.
 
 ### isJobPostingPage
+
 Should be fast (no network calls). Check URL pattern first; optionally also check for the presence of key DOM elements for sites with dynamic routing.
 
 ### Icon
+
 Use a white-fill SVG (the bubble renders on a dark background). Inline it as a template literal string assigned to `readonly icon`.
 
 ## Files to Touch
 
-| File | Change |
-|---|---|
-| `src/adapters/<name>/index.ts` | Create — new adapter class |
-| `src/adapters/registry.ts` | Add import + `adapterRegistry.register(...)` |
+| File                           | Change                                       |
+| ------------------------------ | -------------------------------------------- |
+| `src/adapters/<name>/index.ts` | Create — new adapter class                   |
+| `src/adapters/registry.ts`     | Add import + `adapterRegistry.register(...)` |
 
 That's it — no changes needed to content scripts, background, or options.

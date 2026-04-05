@@ -1,49 +1,69 @@
-import { useState, useEffect } from 'react';
-import { Box, Paper, Button, Snackbar, Alert, Typography, Divider, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent, FormHelperText } from '@mui/material';
-import { ProviderSelector } from '../components/ProviderSelector';
-import { ProviderConfigForm } from '../components/ProviderConfigForm';
-import { ModelSelector } from '../components/ModelSelector';
-import { llmStorage } from '../../shared/storage/llm';
-import type { LLMModel,  } from '../../llm/types';
-import { TestConnectionResponse, GetModelsResponse, ListLLMProvidersResponse } from '../../shared/messaging/types';
-
+import { useState, useEffect } from "react";
+import {
+  Box,
+  Paper,
+  Button,
+  Snackbar,
+  Alert,
+  Typography,
+  Divider,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  SelectChangeEvent,
+  FormHelperText,
+} from "@mui/material";
+import { ProviderSelector } from "../components/ProviderSelector";
+import { ProviderConfigForm } from "../components/ProviderConfigForm";
+import { ModelSelector } from "../components/ModelSelector";
+import { llmStorage } from "../../shared/storage/llm";
+import type { LLMModel } from "../../llm/types";
+import {
+  TestConnectionResponse,
+  GetModelsResponse,
+  ListLLMProvidersResponse,
+} from "../../shared/messaging/types";
 
 export const AIModel = () => {
-  const [providers, setProviders] = useState<ListLLMProvidersResponse['providers']>([]);
-  const [selectedProviderId, setSelectedProviderId] = useState<string>('');
+  const [providers, setProviders] = useState<ListLLMProvidersResponse["providers"]>([]);
+  const [selectedProviderId, setSelectedProviderId] = useState<string>("");
   const [configValues, setConfigValues] = useState<Record<string, unknown>>({});
   const [models, setModels] = useState<LLMModel[]>([]);
-  const [selectedModelId, setSelectedModelId] = useState<string>('');
-  const [jsonStrategy, setJsonStrategy] = useState<'native' | 'extract' | 'two-stage'>('extract');
-  
-  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'checking' | 'idle'>('idle');
+  const [selectedModelId, setSelectedModelId] = useState<string>("");
+  const [jsonStrategy, setJsonStrategy] = useState<"native" | "extract" | "two-stage">("extract");
+
+  const [connectionStatus, setConnectionStatus] = useState<
+    "connected" | "disconnected" | "checking" | "idle"
+  >("idle");
   const [modelsLoading, setModelsLoading] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<'saved' | 'error' | null>(null);
+  const [saveStatus, setSaveStatus] = useState<"saved" | "error" | null>(null);
 
-  const activeProvider =providers?.find(p => p.providerId === selectedProviderId);
-console.log({
-  providers,
-  selectedProviderId,
-  activeProvider,
-  configValues,
-  models,
-  selectedModelId,
-  jsonStrategy,
-  connectionStatus,
-  modelsLoading,
-  saveStatus
-})
+  const activeProvider = providers?.find((p) => p.providerId === selectedProviderId);
+  console.log({
+    providers,
+    selectedProviderId,
+    activeProvider,
+    configValues,
+    models,
+    selectedModelId,
+    jsonStrategy,
+    connectionStatus,
+    modelsLoading,
+    saveStatus,
+  });
   useEffect(() => {
-    console.log('Selected provider:', selectedProviderId, providers);
-    chrome.runtime.sendMessage({
-      type: 'LIST_LLM_PROVIDERS'
-    }).then(response => {
-      if (response.success) {
-        setProviders(response.providers || []);
-      }
-    })
+    console.log("Selected provider:", selectedProviderId, providers);
+    chrome.runtime
+      .sendMessage({
+        type: "LIST_LLM_PROVIDERS",
+      })
+      .then((response) => {
+        if (response.success) {
+          setProviders(response.providers || []);
+        }
+      });
     loadConfig();
-
   }, []);
 
   const loadConfig = async () => {
@@ -51,13 +71,13 @@ console.log({
     if (stored) {
       setSelectedProviderId(stored.providerId);
       setSelectedModelId(stored.providerConfigs[stored.providerId].modelId);
-      setJsonStrategy(stored.jsonStrategy || 'extract');
+      setJsonStrategy(stored.jsonStrategy || "extract");
       if (stored.providerConfigs[stored.providerId]) {
-         setConfigValues(stored.providerConfigs[stored.providerId]);
+        setConfigValues(stored.providerConfigs[stored.providerId]);
       }
-      
+
       if (stored.providerId) {
-         refreshModels(stored.providerId, stored.providerConfigs[stored.providerId]);
+        refreshModels(stored.providerId, stored.providerConfigs[stored.providerId]);
       }
     }
   };
@@ -65,149 +85,159 @@ console.log({
   const refreshModels = async (providerId: string, config: Record<string, unknown>) => {
     setModelsLoading(true);
     try {
-        const response = await chrome.runtime.sendMessage({
-            type: 'GET_LLM_MODELS',
-            payload: { providerId, config }
-        }) as GetModelsResponse;
+      const response = (await chrome.runtime.sendMessage({
+        type: "GET_LLM_MODELS",
+        payload: { providerId, config },
+      })) as GetModelsResponse;
 
-        if (response.success && response.models) {
-            setModels(response.models);
-            setConnectionStatus('connected');
-        } else {
-            setConnectionStatus('disconnected');
-            setModels([]);
-        }
+      if (response.success && response.models) {
+        setModels(response.models);
+        setConnectionStatus("connected");
+      } else {
+        setConnectionStatus("disconnected");
+        setModels([]);
+      }
     } catch (e) {
-        console.error(e);
-        setConnectionStatus('disconnected');
+      console.error(e);
+      setConnectionStatus("disconnected");
     } finally {
-        setModelsLoading(false);
+      setModelsLoading(false);
     }
   };
 
   const handleProviderSelect = (id: string) => {
     setSelectedProviderId(id);
     setModels([]);
-    setSelectedModelId('');
-    setConnectionStatus('idle');
+    setSelectedModelId("");
+    setConnectionStatus("idle");
   };
 
   const handleTestConnection = async (): Promise<boolean> => {
-    setConnectionStatus('checking');
+    setConnectionStatus("checking");
     try {
-        const response = await chrome.runtime.sendMessage({
-            type: 'TEST_LLM_CONNECTION',
-            payload: { providerId: selectedProviderId, config: configValues }
-        }) as TestConnectionResponse;
+      const response = (await chrome.runtime.sendMessage({
+        type: "TEST_LLM_CONNECTION",
+        payload: { providerId: selectedProviderId, config: configValues },
+      })) as TestConnectionResponse;
 
-        if (response.success) {
-            setConnectionStatus('connected');
-            refreshModels(selectedProviderId, configValues);
-            return true;
-        } else {
-            setConnectionStatus('disconnected');
-            return false;
-        }
-    } catch (e) {
-        setConnectionStatus('disconnected');
+      if (response.success) {
+        setConnectionStatus("connected");
+        refreshModels(selectedProviderId, configValues);
+        return true;
+      } else {
+        setConnectionStatus("disconnected");
         return false;
+      }
+    } catch  {
+      setConnectionStatus("disconnected");
+      return false;
     }
   };
 
   const handleSave = async () => {
-        console.log('handleSave',{selectedProviderId, selectedModelId, jsonStrategy});
+    console.log("handleSave", { selectedProviderId, selectedModelId, jsonStrategy });
     try {
-        await llmStorage.setActiveModel(selectedProviderId, selectedModelId, jsonStrategy);
-        await llmStorage.updateProviderConfig(selectedProviderId, configValues);
-        setSaveStatus('saved');
+      await llmStorage.setActiveModel(selectedProviderId, selectedModelId, jsonStrategy);
+      await llmStorage.updateProviderConfig(selectedProviderId, configValues);
+      setSaveStatus("saved");
     } catch (e) {
-        setSaveStatus('error');
-        console.error(e);
+      setSaveStatus("error");
+      console.error(e);
     }
   };
   return (
     <Box sx={{ maxWidth: 800 }}>
-      <Typography variant="h5" gutterBottom>AI Model Configuration</Typography>
+      <Typography variant="h5" gutterBottom>
+        AI Model Configuration
+      </Typography>
       <Divider sx={{ mb: 4 }} />
 
       <Paper sx={{ p: 3, mb: 3 }}>
-        <ProviderSelector 
-            providers={providers}
-            selectedProviderId={selectedProviderId}
-            onSelect={handleProviderSelect}
+        <ProviderSelector
+          providers={providers}
+          selectedProviderId={selectedProviderId}
+          onSelect={handleProviderSelect}
         />
 
         {activeProvider && (
-            <ProviderConfigForm 
-                schema={activeProvider.configSchema}
-                values={configValues}
-                onChange={setConfigValues}
-                onTestConnection={handleTestConnection}
-                connectionStatus={connectionStatus}
-            />
+          <ProviderConfigForm
+            schema={activeProvider.configSchema}
+            values={configValues}
+            onChange={setConfigValues}
+            onTestConnection={handleTestConnection}
+            connectionStatus={connectionStatus}
+          />
         )}
       </Paper>
 
       <Paper sx={{ p: 3, mb: 3 }}>
-        <ModelSelector 
-            models={models}
-            selectedModelId={selectedModelId}
-            onSelect={setSelectedModelId}
-            onRefresh={() => refreshModels(selectedProviderId, configValues)}
-            isLoading={modelsLoading}
-            disabled={connectionStatus !== 'connected'}
+        <ModelSelector
+          models={models}
+          selectedModelId={selectedModelId}
+          onSelect={setSelectedModelId}
+          onRefresh={() => refreshModels(selectedProviderId, configValues)}
+          isLoading={modelsLoading}
+          disabled={connectionStatus !== "connected"}
         />
 
         <Box sx={{ mt: 3, mb: 2 }}>
-            <Typography variant="h6" gutterBottom>Output Strategy</Typography>
-            <FormControl fullWidth disabled={connectionStatus !== 'connected'}>
-                <InputLabel id="json-strategy-label">JSON Strategy</InputLabel>
-                <Select
-                    labelId="json-strategy-label"
-                    value={jsonStrategy}
-                    label="JSON Strategy"
-                    onChange={(e: SelectChangeEvent) => setJsonStrategy(e.target.value as any)}
-                >
-                    <MenuItem value="native">
-                        <Box>
-                            <Typography variant="body1">Native (JSON Mode)</Typography>
-                            <Typography variant="caption" color="text.secondary">Use provider's native JSON capability (e.g. Ollama format: "json")</Typography>
-                        </Box>
-                    </MenuItem>
-                    <MenuItem value="extract">
-                         <Box>
-                            <Typography variant="body1">Extraction (Robust)</Typography>
-                            <Typography variant="caption" color="text.secondary">Allow free text, then extract JSON block via regex</Typography>
-                        </Box>
-                    </MenuItem>
-                    <MenuItem value="two-stage">
-                         <Box>
-                            <Typography variant="body1">Two-Stage (Think & Transform)</Typography>
-                            <Typography variant="caption" color="text.secondary">Generate reasoning first, then transform to JSON (slower, higher quality)</Typography>
-                        </Box>
-                    </MenuItem>
-                </Select>
-                <FormHelperText>Choose how the model produces structured data</FormHelperText>
-            </FormControl>
-        </Box>
-        
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-            <Button 
-                variant="contained" 
-                size="large"
-                onClick={handleSave}
-                disabled={!selectedModelId || connectionStatus !== 'connected'}
+          <Typography variant="h6" gutterBottom>
+            Output Strategy
+          </Typography>
+          <FormControl fullWidth disabled={connectionStatus !== "connected"}>
+            <InputLabel id="json-strategy-label">JSON Strategy</InputLabel>
+            <Select
+              labelId="json-strategy-label"
+              value={jsonStrategy}
+              label="JSON Strategy"
+              onChange={(e: SelectChangeEvent) => setJsonStrategy(e.target.value as any)}
             >
-                Save Configuration
-            </Button>
+              <MenuItem value="native">
+                <Box>
+                  <Typography variant="body1">Native (JSON Mode)</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Use provider's native JSON capability (e.g. Ollama format: "json")
+                  </Typography>
+                </Box>
+              </MenuItem>
+              <MenuItem value="extract">
+                <Box>
+                  <Typography variant="body1">Extraction (Robust)</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Allow free text, then extract JSON block via regex
+                  </Typography>
+                </Box>
+              </MenuItem>
+              <MenuItem value="two-stage">
+                <Box>
+                  <Typography variant="body1">Two-Stage (Think & Transform)</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Generate reasoning first, then transform to JSON (slower, higher quality)
+                  </Typography>
+                </Box>
+              </MenuItem>
+            </Select>
+            <FormHelperText>Choose how the model produces structured data</FormHelperText>
+          </FormControl>
+        </Box>
+
+        <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+          <Button
+            variant="contained"
+            size="large"
+            onClick={handleSave}
+            disabled={!selectedModelId || connectionStatus !== "connected"}
+          >
+            Save Configuration
+          </Button>
         </Box>
       </Paper>
 
-      <Snackbar 
-        open={saveStatus === 'saved'} 
-        autoHideDuration={3000} 
+      <Snackbar
+        open={saveStatus === "saved"}
+        autoHideDuration={3000}
         onClose={() => setSaveStatus(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
         <Alert severity="success">Configuration saved successfully!</Alert>
       </Snackbar>
