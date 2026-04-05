@@ -10,9 +10,9 @@ export default defineManifest({
   version: packageData.version,
   manifest_version: 3,
   icons: {
-    16: 'img/logo-16.png',
-    48: 'img/logo-48.png',
-    128: 'img/logo-128.png',
+    // 16: 'img/logo-16.png',
+    // 48: 'img/logo-48.png',
+    // 128: 'img/logo-128.png',
   },
   // action: {
   //   default_popup: 'popup.html',
@@ -26,20 +26,21 @@ export default defineManifest({
   },
   content_scripts: [
     {
-      matches: [
-        'http://*/*',
-        'https://*/*',
-        'http://localhost:11434/*',
-        'https://localhost:11434/*',
-      ],
+      matches: ['http://*/*', 'https://*/*'],
       js: ['src/content/index.ts'],
     },
   ],
-  web_accessible_resources: [
-    {
-      resources: ['img/logo-16.png', 'img/logo-32.png', 'img/logo-48.png', 'img/logo-128.png'],
-      matches: [],
-    },
-  ],
+  // web_accessible_resources: [
+  //   {
+  //     // resources: ['img/logo-16.png', 'img/logo-32.png', 'img/logo-48.png', 'img/logo-128.png'],
+  //     matches: [],
+  //   },
+  // ],
   permissions: ['storage'],
+  host_permissions: [
+    'http://localhost:*/*',
+    'https://localhost:*/*',
+    'http://127.0.0.1:*/*',
+    'https://generativelanguage.googleapis.com/*',
+  ],
 })

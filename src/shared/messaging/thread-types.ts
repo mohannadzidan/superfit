@@ -1,35 +1,29 @@
-import type { ChatRequest, ToolCall } from 'ollama'
-
 export interface ThreadMessage {
   role: 'user' | 'assistant' | 'system'
   content: string
-  tool_calls?: ToolCall[]
   timestamp: number
 }
 
-export type ThreadStatus = 'idle' | 'streaming' | 'error'
+export type ThreadStatus = 'idle' | 'thinking' | 'error'
 
 export interface ThreadState {
   id: string
   messages: ThreadMessage[]
   status: ThreadStatus
-  currentStreamContent: string
-  currentToolCalls?: ToolCall[]
   inputTokens: number
   outputTokens: number
 }
 
-// Messages exchanged over the Port
 export type ThreadPortMessage =
   | { type: 'INIT_STATE'; thread: ThreadState }
   | { type: 'STATE_UPDATE'; thread: ThreadState }
-  | { type: 'STREAM_UPDATE'; content: string; tool_calls?: ToolCall[] }
-  | { type: 'STREAM_DONE'; finalMessage: ThreadMessage }
+  | { type: 'SET_BADGE'; badge: { text: string } }
   | {
       type: 'SEND_PROMPT'
+      /** Optional agent to use for this prompt. Omit for plain model chat. */
+      agentId?: string
       messages: Omit<ThreadMessage, 'timestamp'>[]
-      tools?: ChatRequest['tools']
       variables: Record<string, string>
     }
-  | { type: 'FIT_RESULT'; result: any }
+  | { type: 'TOOL_RESULT'; toolName: string; result: unknown }
   | { type: 'ERROR'; error: string }

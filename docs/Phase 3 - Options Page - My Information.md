@@ -1,6 +1,6 @@
 ## Objective
 
-Build the Options page section for managing user information.  For the MVP, this consists solely of resume input in Markdown format with live preview. 
+Build the Options page section for managing user information. For the MVP, this consists solely of resume input in Markdown format with live preview.
 
 ## Options Page Structure
 
@@ -11,7 +11,7 @@ flowchart LR
             MI[My Information]
             AI[AI Model]
         end
-        
+
         subgraph MainContent["Main Content Area"]
             subgraph MyInfoSection["My Information Section"]
                 TabNav[Tab Navigation]
@@ -19,7 +19,7 @@ flowchart LR
             end
         end
     end
-    
+
     SideNav --> MainContent
     MI --> MyInfoSection
     TabNav --> ResumeTab
@@ -36,9 +36,9 @@ flowchart LR
 
 ### Tab Navigation (under My Information)
 
-| Tab     | Description                              |
-|---------|------------------------------------------|
-| Resume  | Markdown editor with live preview        |
+| Tab    | Description                       |
+| ------ | --------------------------------- |
+| Resume | Markdown editor with live preview |
 
 > Note: Additional tabs (e.g., Questions/Answers) are deferred to post-MVP.
 
@@ -54,14 +54,14 @@ flowchart TB
             TextArea[Markdown TextArea]
             CharCount[Character Counter]
         end
-        
+
         subgraph PreviewPanel["Preview Panel (50%)"]
             Preview[Rendered Markdown]
         end
-        
+
         ActionBar[Save / Reset Actions]
     end
-    
+
     EditorPanel --> ActionBar
     PreviewPanel --> ActionBar
 ```
@@ -73,19 +73,19 @@ flowchart TB
 ```typescript
 interface MarkdownEditorProps {
   /** Current markdown content */
-  value: string;
-  
+  value: string
+
   /** Callback when content changes */
-  onChange: (value: string) => void;
-  
+  onChange: (value: string) => void
+
   /** Maximum character limit */
-  maxLength?: number;
-  
+  maxLength?: number
+
   /** Placeholder text */
-  placeholder?: string;
-  
+  placeholder?: string
+
   /** Read-only mode */
-  disabled?: boolean;
+  disabled?: boolean
 }
 ```
 
@@ -94,22 +94,22 @@ interface MarkdownEditorProps {
 ```typescript
 interface MarkdownPreviewProps {
   /** Markdown content to render */
-  content:  string;
-  
+  content: string
+
   /** Custom CSS class */
-  className?:  string;
+  className?: string
 }
 ```
 
 ### UI Behavior
 
-| Interaction          | Behavior                                      |
-|----------------------|-----------------------------------------------|
-| Text input           | Immediate update to preview (debounced)       |
-| Save button          | Persist to Chrome Storage                     |
-| Reset button         | Reload from last saved state                  |
-| Page leave w/ unsaved| Show confirmation dialog                      |
-| Character limit      | Show warning at 90%, prevent input at 100%    |
+| Interaction           | Behavior                                   |
+| --------------------- | ------------------------------------------ |
+| Text input            | Immediate update to preview (debounced)    |
+| Save button           | Persist to Chrome Storage                  |
+| Reset button          | Reload from last saved state               |
+| Page leave w/ unsaved | Show confirmation dialog                   |
+| Character limit       | Show warning at 90%, prevent input at 100% |
 
 ## Storage Specification
 
@@ -120,21 +120,21 @@ interface MarkdownPreviewProps {
 
 export interface ResumeData {
   /** Markdown content of the resume */
-  markdownContent: string;
-  
+  markdownContent: string
+
   /** ISO timestamp of last modification */
-  lastModified: string;
-  
+  lastModified: string
+
   /** Data version for future migrations */
-  version: number;
+  version: number
 }
 ```
 
 ### Storage Keys
 
-| Key              | Type       | Description                    |
-|------------------|------------|--------------------------------|
-| `resume_data`    | ResumeData | User's resume information      |
+| Key           | Type       | Description               |
+| ------------- | ---------- | ------------------------- |
+| `resume_data` | ResumeData | User's resume information |
 
 ### Storage Service Interface
 
@@ -146,23 +146,23 @@ export interface IResumeStorage {
    * Get stored resume data
    * @returns ResumeData or null if not set
    */
-  getResume(): Promise<ResumeData | null>;
-  
+  getResume(): Promise<ResumeData | null>
+
   /**
    * Save resume data
    * @param content - Markdown content to save
    */
-  saveResume(content: string): Promise<void>;
-  
+  saveResume(content: string): Promise<void>
+
   /**
    * Clear stored resume
    */
-  clearResume(): Promise<void>;
-  
+  clearResume(): Promise<void>
+
   /**
    * Check if resume exists
    */
-  hasResume(): Promise<boolean>;
+  hasResume(): Promise<boolean>
 }
 ```
 
@@ -178,7 +178,7 @@ sequenceDiagram
     User->>UI: Types in editor
     UI->>State: Update local state
     State->>UI: Re-render preview
-    
+
     User->>UI:  Clicks Save
     UI->>Storage: saveResume(content)
     Storage-->>UI: Success
@@ -192,8 +192,8 @@ sequenceDiagram
 
 ## Validation Rules
 
-| Rule                     | Constraint                          |
-|--------------------------|-------------------------------------|
-| Maximum length           | 50,000 characters                   |
-| Minimum length           | 0 (empty allowed)                   |
-| Content type             | Valid UTF-8 text                    |
+| Rule           | Constraint        |
+| -------------- | ----------------- |
+| Maximum length | 50,000 characters |
+| Minimum length | 0 (empty allowed) |
+| Content type   | Valid UTF-8 text  |
