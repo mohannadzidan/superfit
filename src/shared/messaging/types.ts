@@ -1,46 +1,64 @@
-import { LLMModel, ProviderConfigSchema } from '../../llm/types'
-import { JobPostingInfo } from '../../adapters/types'
-import { ScoredJob } from '../scoring/types'
+import type { LLMModel, ProviderConfigSchema } from '../../llm/types'
+import type { JobPostingInfo } from '../../adapters/types'
+import type { ScoredJob } from '../scoring/types'
+import type { ProviderType, RouterModelStatus, AcquiredModelConfig } from '../../llm/router/router-types'
 
-export interface TestConnectionMessage {
-  type: 'TEST_LLM_CONNECTION'
+// ── Provider / Router management ──────────────────────────────────────────────
+
+export interface ListProviderTypesMessage {
+  type: 'LIST_PROVIDER_TYPES'
+}
+
+export interface ListProviderTypesResponse {
+  success: boolean
+  providerTypes?: Array<{
+    type: ProviderType
+    name: string
+    configSchema: ProviderConfigSchema
+  }>
+  error?: string
+}
+
+export interface GetProviderModelsMessage {
+  type: 'GET_PROVIDER_MODELS'
   payload: {
-    providerId: string
+    providerType: ProviderType
+    config: Record<string, unknown>
+    query?: string
+  }
+}
+
+export interface GetProviderModelsResponse {
+  success: boolean
+  models?: LLMModel[]
+  supportsSearch?: boolean
+  error?: string
+}
+
+export interface TestProviderConnectionMessage {
+  type: 'TEST_PROVIDER_CONNECTION'
+  payload: {
+    providerType: ProviderType
     config: Record<string, unknown>
   }
 }
 
-export interface TestConnectionResponse {
+export interface TestProviderConnectionResponse {
   success: boolean
   error?: string
 }
 
-export interface GetModelsMessage {
-  type: 'GET_LLM_MODELS'
-  payload: {
-    providerId: string
-    config?: Record<string, unknown>
-  }
+export interface GetRouterStatusMessage {
+  type: 'GET_ROUTER_STATUS'
 }
 
-export interface ListLLMProvidersMessage {
-  type: 'LIST_LLM_PROVIDERS'
+export interface GetRouterStatusResponse {
+  success: boolean
+  status?: Record<string, RouterModelStatus[]>
+  error?: string
 }
 
-export interface ListLLMProvidersResponse {
-  success: boolean
-  providers?: {
-    readonly providerId: string
-    readonly providerName: string
-    readonly configSchema: ProviderConfigSchema
-  }[]
-  error?: string
-}
-export interface GetModelsResponse {
-  success: boolean
-  models?: LLMModel[]
-  error?: string
-}
+// ── Job capture ────────────────────────────────────────────────────────────────
 
 export interface AnalyzeJobFitMessage {
   type: 'ANALYZE_JOB_FIT'
@@ -52,7 +70,7 @@ export interface AnalyzeJobFitMessage {
 export interface AnalyzeJobFitResponse {
   success: boolean
   result?: ScoredJob
-  error?: string // Simplification of AnalysisError for MVP
+  error?: string
 }
 
 export interface ProxyFetchMessage {
@@ -101,10 +119,43 @@ export interface CapturedJobChangedMessage {
   }
 }
 
+// ── Content-script model acquisition ─────────────────────────────────────────
+
+export interface AcquireModelMessage {
+  type: 'ACQUIRE_MODEL'
+  payload: { purpose: string }
+}
+
+export interface AcquireModelResponse {
+  success: boolean
+  model?: AcquiredModelConfig
+  error?: string
+}
+
+export interface RecordModelSuccessMessage {
+  type: 'RECORD_MODEL_SUCCESS'
+  payload: { key: string; inputTokens: number; outputTokens: number }
+}
+
+export interface RecordModelThrottleMessage {
+  type: 'RECORD_MODEL_THROTTLE'
+  payload: { key: string; retryAfterMs?: number }
+}
+
+export interface RecordModelErrorMessage {
+  type: 'RECORD_MODEL_ERROR'
+  payload: { key: string; error: string }
+}
+
 export type LLMMessage =
-  | TestConnectionMessage
-  | GetModelsMessage
-  | ListLLMProvidersMessage
+  | ListProviderTypesMessage
+  | GetProviderModelsMessage
+  | TestProviderConnectionMessage
+  | GetRouterStatusMessage
+  | AcquireModelMessage
+  | RecordModelSuccessMessage
+  | RecordModelThrottleMessage
+  | RecordModelErrorMessage
   | AnalyzeJobFitMessage
   | ProxyFetchMessage
   | CaptureJobMessage

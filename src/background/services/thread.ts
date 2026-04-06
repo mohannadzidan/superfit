@@ -1,6 +1,6 @@
 import { llmService } from '../../llm/service'
 import { agentRegistry } from '../../llm/agents/registry'
-import { AgentEvent } from '../../llm/agents/types'
+import type { AgentEvent } from '../../llm/agents/types'
 import { ThreadState, ThreadPortMessage, ThreadMessage } from '../../shared/messaging/thread-types'
 import { HumanMessage, SystemMessage, AIMessage, BaseMessage } from '@langchain/core/messages'
 import Mustache from 'mustache'
@@ -33,7 +33,13 @@ export class ThreadService {
 
     port.onMessage.addListener(async (msg: ThreadPortMessage) => {
       if (msg.type === 'SEND_PROMPT') {
-        await this.handleUserMessage(threadId, msg.variables, msg.messages, msg.agentId)
+        await this.handleUserMessage(
+          threadId,
+          msg.variables,
+          msg.messages,
+          msg.agentId,
+          msg.routerPurpose,
+        )
       }
     })
 
@@ -68,6 +74,7 @@ export class ThreadService {
     variables: Record<string, string>,
     messages: Omit<ThreadMessage, 'timestamp'>[],
     agentId?: string,
+    routerPurpose?: string,
   ) {
     const thread = this.getOrCreateThread(threadId)
 
@@ -78,7 +85,7 @@ export class ThreadService {
     try {
       const builtinVariables = await llmService.loadVariables()
       const allVariables = { ...builtinVariables, ...variables }
-      const model = llmService.getModel()
+      const model = llmService.getModel(routerPurpose)
 
       const assistantMsg: ThreadMessage = { role: 'assistant', content: '', timestamp: Date.now() }
       thread.messages.push(assistantMsg)
@@ -88,13 +95,16 @@ export class ThreadService {
       if (agent) {
         const langchainMessages: BaseMessage[] = thread.messages
           .filter((m) => m.role !== 'assistant' || m.content)
-          .slice(0, -1) // exclude the empty assistant placeholder
+          .slice(0, -1)
           .map((msg) => {
             const content = Mustache.render(msg.content, allVariables)
             switch (msg.role) {
-              case 'system':    return new SystemMessage(content)
-              case 'user':      return new HumanMessage(content)
-              case 'assistant': return new AIMessage(content)
+              case 'system':
+                return new SystemMessage(content)
+              case 'user':
+                return new HumanMessage(content)
+              case 'assistant':
+                return new AIMessage(content)
             }
           })
 
@@ -104,22 +114,23 @@ export class ThreadService {
         }
       } else {
         const langchainMessages: BaseMessage[] = thread.messages
-          .slice(0, -1) // exclude the empty assistant placeholder
+          .slice(0, -1)
           .map((msg) => {
             const content = Mustache.render(msg.content, allVariables)
             switch (msg.role) {
-              case 'system':    return new SystemMessage(content)
-              case 'user':      return new HumanMessage(content)
-              case 'assistant': return new AIMessage(content)
+              case 'system':
+                return new SystemMessage(content)
+              case 'user':
+                return new HumanMessage(content)
+              case 'assistant':
+                return new AIMessage(content)
             }
           })
 
-        const stream = await model.stream(langchainMessages)
-        for await (const chunk of stream) {
-          const text = typeof chunk.content === 'string' ? chunk.content : ''
-          assistantMsg.content += text
-          this.broadcast(threadId, { type: 'STATE_UPDATE', thread })
-        }
+        const result = await model.invoke(langchainMessages)
+        assistantMsg.content =
+          typeof result.content === 'string' ? result.content : JSON.stringify(result.content)
+        this.broadcast(threadId, { type: 'STATE_UPDATE', thread })
       }
 
       thread.status = 'idle'

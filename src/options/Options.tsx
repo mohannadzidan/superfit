@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from 'react'
 import {
   Box,
   CssBaseline,
@@ -10,19 +10,26 @@ import {
   ListItemText,
   Toolbar,
   AppBar,
-  Typography
-} from '@mui/material';
-import PersonIcon from '@mui/icons-material/Person';
-import TuneIcon from '@mui/icons-material/Tune';
-import LabelIcon from '@mui/icons-material/Label';
-import { MyInfo } from './pages/MyInfo';
-import { AIModel } from './pages/AIModel';
-import { Keywords } from './pages/Keywords';
+  Typography,
+  Divider,
+} from '@mui/material'
+import PersonIcon from '@mui/icons-material/Person'
+import LabelIcon from '@mui/icons-material/Label'
+import CloudIcon from '@mui/icons-material/Cloud'
+import SmartToyIcon from '@mui/icons-material/SmartToy'
+import AccountTreeIcon from '@mui/icons-material/AccountTree'
+import { MyInfo } from './pages/MyInfo'
+import { Keywords } from './pages/Keywords'
+import { ProvidersPage } from './pages/ProvidersPage'
+import { ModelsPage } from './pages/ModelsPage'
+import { RoutersPage } from './pages/RoutersPage'
 
-const drawerWidth = 240;
+const drawerWidth = 240
+
+type Page = 'info' | 'keywords' | 'providers' | 'models' | 'routers'
 
 export const Options = () => {
-  const [activePage, setActivePage] = useState<'info' | 'model' | 'keywords'>('info');
+  const [activePage, setActivePage] = useState<Page>('info')
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -46,25 +53,11 @@ export const Options = () => {
         <Box sx={{ overflow: 'auto' }}>
           <List>
             <ListItem disablePadding>
-              <ListItemButton 
-                selected={activePage === 'info'} 
-                onClick={() => setActivePage('info')}
-              >
+              <ListItemButton selected={activePage === 'info'} onClick={() => setActivePage('info')}>
                 <ListItemIcon>
                   <PersonIcon />
                 </ListItemIcon>
                 <ListItemText primary="My Information" />
-              </ListItemButton>
-            </ListItem>
-            <ListItem disablePadding>
-              <ListItemButton
-                selected={activePage === 'model'}
-                onClick={() => setActivePage('model')}
-              >
-                <ListItemIcon>
-                  <TuneIcon />
-                </ListItemIcon>
-                <ListItemText primary="AI Model" />
               </ListItemButton>
             </ListItem>
             <ListItem disablePadding>
@@ -79,16 +72,60 @@ export const Options = () => {
               </ListItemButton>
             </ListItem>
           </List>
+          <Divider />
+          <List
+            subheader={
+              <Typography variant="caption" sx={{ px: 2, py: 1, display: 'block', color: 'text.secondary' }}>
+                LLM ROUTING
+              </Typography>
+            }
+          >
+            <ListItem disablePadding>
+              <ListItemButton
+                selected={activePage === 'providers'}
+                onClick={() => setActivePage('providers')}
+              >
+                <ListItemIcon>
+                  <CloudIcon />
+                </ListItemIcon>
+                <ListItemText primary="Providers" />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                selected={activePage === 'models'}
+                onClick={() => setActivePage('models')}
+              >
+                <ListItemIcon>
+                  <SmartToyIcon />
+                </ListItemIcon>
+                <ListItemText primary="Models" />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                selected={activePage === 'routers'}
+                onClick={() => setActivePage('routers')}
+              >
+                <ListItemIcon>
+                  <AccountTreeIcon />
+                </ListItemIcon>
+                <ListItemText primary="Routers" />
+              </ListItemButton>
+            </ListItem>
+          </List>
         </Box>
       </Drawer>
-      <Box component="main" sx={{ flexGrow: 1, p: 3, height: '100vh', overflow: 'hidden' }}>
+      <Box component="main" sx={{ flexGrow: 1, p: 3, height: '100vh', overflow: 'auto' }}>
         <Toolbar />
         {activePage === 'info' && <MyInfo />}
-        {activePage === 'model' && <AIModel />}
         {activePage === 'keywords' && <Keywords />}
+        {activePage === 'providers' && <ProvidersPage />}
+        {activePage === 'models' && <ModelsPage />}
+        {activePage === 'routers' && <RoutersPage />}
       </Box>
     </Box>
-  );
-};
+  )
+}
 
-export default Options;
+export default Options

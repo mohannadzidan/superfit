@@ -22,6 +22,8 @@ export type ThreadPortMessage =
       type: 'SEND_PROMPT'
       /** Optional agent to use for this prompt. Omit for plain model chat. */
       agentId?: string
+      /** Optional router purpose for model selection */
+      routerPurpose?: string
       messages: Omit<ThreadMessage, 'timestamp'>[]
       variables: Record<string, string>
     }

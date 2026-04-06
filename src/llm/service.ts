@@ -1,51 +1,28 @@
-import { IProviderRegistry, providerRegistry } from './providers/registry'
-import { LangChainProvider } from './providers/types'
-import { llmStorage } from '../shared/storage/llm'
+import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
+import { RouterManager } from './router/router-manager'
+import type { LLMRouter } from './router/router-engine'
 import { resumeStorage } from '../shared/storage/resume'
-import { BaseChatModel } from '@langchain/core/language_models/chat_models'
 
 export interface ILLMService {
-  initialize(providerId?: string, modelId?: string): Promise<void>
-  getModel(): BaseChatModel
+  initialize(): Promise<void>
+  getModel(purpose?: string): BaseChatModel
+  getRouter(purpose?: string): LLMRouter
   loadVariables(): Promise<Record<string, string>>
 }
 
 export class LLMService implements ILLMService {
-  private currentProvider: LangChainProvider | null = null
-  private currentModelId: string = ''
+  private routerManager = new RouterManager()
 
-  constructor(private registry: IProviderRegistry = providerRegistry) {}
-
-  async initialize(providerId?: string, modelId?: string): Promise<void> {
-    if (providerId && modelId) {
-      this.setProvider(providerId, modelId)
-      return
-    }
-
-    const stored = await llmStorage.getConfig()
-    if (stored) {
-      this.setProvider(stored.providerId, stored.providerConfigs[stored.providerId].modelId)
-
-      const provider = this.registry.getProvider(stored.providerId)
-      if (provider && stored.providerConfigs[stored.providerId]) {
-        await provider.configure(stored.providerConfigs[stored.providerId].config)
-      }
-    } else {
-      const providers = this.registry.getAllProviders()
-      if (providers.length > 0) {
-        this.currentProvider = providers[0]
-      }
-    }
+  async initialize(): Promise<void> {
+    await this.routerManager.initialize()
   }
 
-  private setProvider(providerId: string, modelId: string) {
-    const provider = this.registry.getProvider(providerId)
-    if (!provider) {
-      console.warn(`LLMService: Provider ${providerId} not found.`)
-      return
-    }
-    this.currentProvider = provider
-    this.currentModelId = modelId
+  getModel(purpose?: string): BaseChatModel {
+    return this.routerManager.getRouter(purpose ?? 'default').getModel().model
+  }
+
+  getRouter(purpose?: string): LLMRouter {
+    return this.routerManager.getRouter(purpose ?? 'default')
   }
 
   async loadVariables(): Promise<Record<string, string>> {
@@ -53,17 +30,8 @@ export class LLMService implements ILLMService {
     return { resume: resume?.markdownContent ?? '' }
   }
 
-  getModel(): BaseChatModel {
-    if (!this.currentProvider) throw new Error('No LLM provider configured.')
-    if (!this.currentModelId) throw new Error('No model selected.')
-    return this.currentProvider.createModel(this.currentModelId)
-  }
-
-  getCurrentSettings() {
-    return {
-      providerId: this.currentProvider?.providerId,
-      modelId: this.currentModelId,
-    }
+  get manager(): RouterManager {
+    return this.routerManager
   }
 }
 
